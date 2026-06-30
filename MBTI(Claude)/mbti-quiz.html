@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나는 어떤 사람일까? 🌟 MBTI 성격 탐험</title>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --mint:    #6ECFB5;
+    --mint-lt: #E8FAF5;
+    --lav:     #A78BFA;
+    --lav-lt:  #F3F0FF;
+    --peach:   #F9956A;
+    --peach-lt:#FFF1EB;
+    --sun:     #FFCC4D;
+    --sun-lt:  #FFFBEA;
+    --gray-1:  #F7F8FA;
+    --gray-2:  #EDEDF0;
+    --gray-3:  #B0B3BF;
+    --text:    #2D2D3A;
+    --text-s:  #6B6B80;
+    --white:   #FFFFFF;
+    --radius:  16px;
+    --shadow:  0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'Nanum Gothic', sans-serif;
+    background: var(--gray-1);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .site-header .crown { font-size: 2.8rem; line-height: 1; }
+  .site-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin: 8px 0 4px;
+    background: linear-gradient(135deg, var(--mint), var(--lav));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .site-header p { color: var(--text-s); font-size: 0.95rem; }
+
+  /* ── PROGRESS ── */
+  .progress-wrap {
+    max-width: 680px;
+    margin: 0 auto 28px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--text-s);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .progress-bar {
+    height: 8px;
+    background: var(--gray-2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--mint), var(--lav));
+    transition: width 0.5s ease;
+  }
+
+  /* ── FORM WRAPPER ── */
+  #quiz-page { max-width: 680px; margin: 0 auto; display: block; }
+  #result-page { max-width: 720px; margin: 0 auto; display: none; }
+
+  /* ── DIMENSION SECTION ── */
+  .dim-section { margin-bottom: 28px; }
+  .dim-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .dim-E { background: var(--mint-lt);  color: var(--mint);  }
+  .dim-S { background: var(--sun-lt);   color: #D4960A;      }
+  .dim-T { background: var(--lav-lt);   color: var(--lav);   }
+  .dim-J { background: var(--peach-lt); color: var(--peach); }
+
+  /* ── QUESTION CARD ── */
+  .q-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    margin-bottom: 12px;
+    border-left: 4px solid transparent;
+    transition: box-shadow 0.2s;
+  }
+  .q-card:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.11); }
+  .q-card.dim-E-card { border-color: var(--mint); }
+  .q-card.dim-S-card { border-color: var(--sun);  }
+  .q-card.dim-T-card { border-color: var(--lav);  }
+  .q-card.dim-J-card { border-color: var(--peach);}
+
+  .q-text {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .q-num {
+    display: inline-block;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    text-align: center; line-height: 26px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .dim-E-card .q-num { background: var(--mint-lt);  color: var(--mint); }
+  .dim-S-card .q-num { background: var(--sun-lt);   color: #D4960A; }
+  .dim-T-card .q-num { background: var(--lav-lt);   color: var(--lav); }
+  .dim-J-card .q-num { background: var(--peach-lt); color: var(--peach); }
+
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .options label {
+    position: relative;
+    cursor: pointer;
+  }
+  .options input[type="radio"] {
+    position: absolute; opacity: 0; width: 0; height: 0;
+  }
+  .opt-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px;
+    border-radius: 12px;
+    border: 2px solid var(--gray-2);
+    background: var(--gray-1);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.35;
+    transition: all 0.18s;
+    min-height: 60px;
+    color: var(--text-s);
+  }
+  .opt-btn .opt-emoji { font-size: 1.3rem; margin-bottom: 3px; }
+  .options input:checked + .opt-btn {
+    border-color: var(--lav);
+    background: var(--lav-lt);
+    color: var(--lav);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(167,139,250,0.25);
+  }
+  .dim-E-card .options input:checked + .opt-btn {
+    border-color: var(--mint); background: var(--mint-lt); color: #2DAB8D;
+    box-shadow: 0 4px 12px rgba(110,207,181,0.3);
+  }
+  .dim-S-card .options input:checked + .opt-btn {
+    border-color: var(--sun); background: var(--sun-lt); color: #C48A00;
+    box-shadow: 0 4px 12px rgba(255,204,77,0.3);
+  }
+  .dim-T-card .options input:checked + .opt-btn {
+    border-color: var(--lav); background: var(--lav-lt); color: #7C3AED;
+    box-shadow: 0 4px 12px rgba(167,139,250,0.3);
+  }
+  .dim-J-card .options input:checked + .opt-btn {
+    border-color: var(--peach); background: var(--peach-lt); color: #D95B2A;
+    box-shadow: 0 4px 12px rgba(249,149,106,0.3);
+  }
+
+  /* ── SAVE BUTTON ── */
+  .save-wrap { text-align: center; margin-top: 36px; }
+  #save-btn {
+    padding: 16px 52px;
+    border: none;
+    border-radius: 99px;
+    background: linear-gradient(135deg, var(--mint), var(--lav));
+    color: var(--white);
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(110,207,181,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: 'Nanum Gothic', sans-serif;
+  }
+  #save-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(110,207,181,0.45); }
+  #save-btn:active { transform: translateY(0); }
+  .save-hint { margin-top: 10px; color: var(--text-s); font-size: 0.82rem; }
+
+  /* ── RESULT PAGE ── */
+  .result-hero {
+    background: var(--white);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    padding: 40px 28px 32px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, var(--mint), var(--lav), var(--peach), var(--sun));
+  }
+  .mbti-emoji { font-size: 5rem; line-height: 1; margin-bottom: 12px; display: block; }
+  .mbti-type {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+  }
+  .mbti-nickname {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-s);
+  }
+  .mbti-desc {
+    font-size: 0.97rem;
+    line-height: 1.75;
+    color: var(--text);
+    max-width: 540px;
+    margin: 0 auto;
+  }
+  .mbti-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .tag {
+    padding: 5px 14px;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .info-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+  .info-card h3 {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .info-card ul { list-style: none; }
+  .info-card li {
+    font-size: 0.9rem;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--gray-2);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.45;
+  }
+  .info-card li:last-child { border-bottom: none; }
+  .li-dot { flex-shrink: 0; margin-top: 2px; }
+
+  .jobs-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .jobs-card h3 {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .job-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .job-chip {
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .study-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .study-card h3 {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .study-steps { display: flex; flex-direction: column; gap: 10px; }
+  .study-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    font-weight: 700;
+  }
+  .step-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+  /* ── RETRY BUTTON ── */
+  .retry-wrap { text-align: center; margin-top: 8px; }
+  #retry-btn {
+    padding: 14px 44px;
+    border: 2px solid var(--gray-2);
+    border-radius: 99px;
+    background: var(--white);
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: 'Nanum Gothic', sans-serif;
+    transition: all 0.15s;
+  }
+  #retry-btn:hover { border-color: var(--lav); color: var(--lav); transform: translateY(-2px); }
+
+  /* ── ERROR TOAST ── */
+  .error-toast {
+    display: none;
+    position: fixed;
+    bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: #FF4C60;
+    color: white;
+    padding: 14px 28px;
+    border-radius: 99px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    box-shadow: 0 6px 24px rgba(255,76,96,0.4);
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .error-toast.show { display: block; animation: slideUp 0.3s ease; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  @media (max-width: 520px) {
+    .options { grid-template-columns: 1fr 1fr 1fr; }
+    .opt-btn { font-size: 0.72rem; padding: 8px 4px; min-height: 54px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .mbti-type { font-size: 2.2rem; }
+    .mbti-emoji { font-size: 4rem; }
+    body { padding: 16px 12px 50px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="crown">🌟</div>
+  <h1>나는 어떤 사람일까?</h1>
+  <p>12가지 질문으로 알아보는 나만의 성격 탐험!</p>
+</header>
+
+<!-- QUIZ PAGE -->
+<div id="quiz-page">
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>📝 질문에 답해봐요</span>
+      <span id="prog-text">0 / 12 완료</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- E/I -->
+  <div class="dim-section">
+    <div class="dim-label dim-E">👥 나는 사람들과 어떻게 지낼까요?</div>
+
+    <div class="q-card dim-E-card">
+      <div class="q-text"><span class="q-num">1</span>쉬는 시간에 나는?</div>
+      <div class="options">
+        <label><input type="radio" name="q1" value="E"> <div class="opt-btn"><div class="opt-emoji">🏃</div>친구들과 신나게 놀아요</div></label>
+        <label><input type="radio" name="q1" value="M"> <div class="opt-btn"><div class="opt-emoji">🤷</div>그때그때 달라요</div></label>
+        <label><input type="radio" name="q1" value="I"> <div class="opt-btn"><div class="opt-emoji">📚</div>조용히 혼자 쉬어요</div></label>
+      </div>
+    </div>
+
+    <div class="q-card dim-E-card">
+      <div class="q-text"><span class="q-num">2</span>새 친구를 사귀는 게?</div>
+      <div class="options">
+        <label><input type="radio" name="q2" value="E"> <div class="opt-btn"><div class="opt-emoji">😄</div>너무 쉬워요!</div></label>
+        <label><input type="radio" name="q2" value="M"> <div class="opt-btn"><div class="opt-emoji">😊</div>보통이에요</div></label>
+        <label><input type="radio" name="q2" value="I"> <div class="opt-btn"><div class="opt-emoji">😰</div>좀 어렵고 긴장돼요</div></label>
+      </div>
+    </div>
+
+    <div class="q-card dim-E-card">
+      <div class="q-text"><span class="q-num">3</span>모둠 활동에서 나는?</div>
+      <div class="options">
+        <label><input type="radio" name="q3" value="E"> <div class="opt-btn"><div class="opt-emoji">📣</div>이야기를 많이 해요</div></label>
+        <label><input type="radio" name="q3" value="M"> <div class="opt-btn"><div class="opt-emoji">🙂</div>적당히 참여해요</div></label>
+        <label><input type="radio" name="q3" value="I"> <div class="opt-btn"><div class="opt-emoji">🤫</div>듣고 생각하는 편이에요</div></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- S/N -->
+  <div class="dim-section">
+    <div class="dim-label dim-S">🔍 나는 어떻게 생각할까요?</div>
+
+    <div class="q-card dim-S-card">
+      <div class="q-text"><span class="q-num">4</span>수업에서 좋아하는 것은?</div>
+      <div class="options">
+        <label><input type="radio" name="q4" value="S"> <div class="opt-btn"><div class="opt-emoji">📖</div>직접 해보는 실험</div></label>
+        <label><input type="radio" name="q4" value="M"> <div class="opt-btn"><div class="opt-emoji">🤔</div>둘 다 좋아요</div></label>
+        <label><input type="radio" name="q4" value="N"> <div class="opt-btn"><div class="opt-emoji">💭</div>왜 그런지 상상하기</div></label>
+      </div>
+    </div>
+
+    <div class="q-card dim-S-card">
+      <div class="q-text"><span class="q-num">5</span>새로운 장난감이 생기면?</div>
+      <div class="options">
+        <label><input type="radio" name="q5" value="S"> <div class="opt-btn"><div class="opt-emoji">📋</div>설명서를 꼼꼼히 읽어요</div></label>
+        <label><input type="radio" name="q5" value="M"> <div class="opt-btn"><div class="opt-emoji">😏</div>조금 읽고 해봐요</div></label>
+        <label><input type="radio" name="q5" value="N"> <div class="opt-btn"><div class="opt-emoji">🚀</div>그냥 바로 해봐요</div></label>
+      </div>
+    </div>
+
+    <div class="q-card dim-S-card">
+      <div class="q-text"><span class="q-num">6</span>미래에 대해 생각하면?</div>
+      <div class="options">
+        <label><input type="radio" name="q6" value="S"> <div class="opt-btn"><div class="opt-emoji">📅</div>지금이 더 중요해요</div></label>
+        <label><input type="radio" name="q6" value="M"> <div class="opt-btn"><div class="opt-emoji">🗓️</div>가끔 생각해봐요</div></label>
+        <label><input type="radio" name="q6" value="N"> <div class="opt-btn"><div class="opt-emoji">🌈</div>멋진 꿈을 자주 꿔요</div></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- T/F -->
+  <div class="dim-section">
+    <div class="dim-label dim-T">💡 나는 어떻게 결정할까요?</div>
+
+    <div class="q-card dim-T-card">
+      <div class="q-text"><span class="q-num">7</span>친구가 틀린 답을 말하면?</div>
+      <div class="options">
+        <label><input type="radio" name="q7" value="T"> <div class="opt-btn"><div class="opt-emoji">✋</div>바로 알려줘요</div></label>
+        <label><input type="radio" name="q7" value="M"> <div class="opt-btn"><div class="opt-emoji">😶</div>상황 봐서 해요</div></label>
+        <label><input type="radio" name="q7" value="F"> <div class="opt-btn"><div class="opt-emoji">🤗</div>기분 안 상하게 조심해요</div></label>
+      </div>
+    </div>
+
+    <div class="q-card dim-T-card">
+      <div class="q-text"><span class="q-num">8</span>나쁜 일이 생겼을 때?</div>
+      <div class="options">
+        <label><input type="radio" name="q8" value="T"> <div class="opt-btn"><div class="opt-emoji">🔧</div>어떻게 해결할지 생각해요</div></label>
+        <label><input type="radio" name="q8" value="M"> <div class="opt-btn"><div class="opt-emoji">💬</div>생각도 하고 기분도 봐요</div></label>
+        <label><input type="radio" name="q8" value="F"> <div class="opt-btn"><div class="opt-emoji">😢</div>먼저 속상함을 풀어요</div></label>
+      </div>
+    </div>
+
+    <div class="q-card dim-T-card">
+      <div class="q-text"><span class="q-num">9</span>게임에서 질 것 같으면?</div>
+      <div class="options">
+        <label><input type="radio" name="q9" value="T"> <div class="opt-btn"><div class="opt-emoji">🏆</div>전략을 바꿔서 이기고 싶어요</div></label>
+        <label><input type="radio" name="q9" value="M"> <div class="opt-btn"><div class="opt-emoji">🎮</div>최선을 다해봐요</div></label>
+        <label><input type="radio" name="q9" value="F"> <div class="opt-btn"><div class="opt-emoji">🤝</div>즐기는 게 더 좋아요</div></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- J/P -->
+  <div class="dim-section">
+    <div class="dim-label dim-J">📅 나는 어떻게 생활할까요?</div>
+
+    <div class="q-card dim-J-card">
+      <div class="q-text"><span class="q-num">10</span>숙제를 할 때?</div>
+      <div class="options">
+        <label><input type="radio" name="q10" value="J"> <div class="opt-btn"><div class="opt-emoji">⏰</div>받으면 바로 해요</div></label>
+        <label><input type="radio" name="q10" value="M"> <div class="opt-btn"><div class="opt-emoji">📝</div>때에 따라 달라요</div></label>
+        <label><input type="radio" name="q10" value="P"> <div class="opt-btn"><div class="opt-emoji">😅</div>제출 직전에 해요</div></label>
+      </div>
+    </div>
+
+    <div class="q-card dim-J-card">
+      <div class="q-text"><span class="q-num">11</span>가방 속 물건은?</div>
+      <div class="options">
+        <label><input type="radio" name="q11" value="J"> <div class="opt-btn"><div class="opt-emoji">🗂️</div>늘 정리되어 있어요</div></label>
+        <label><input type="radio" name="q11" value="M"> <div class="opt-btn"><div class="opt-emoji">🎒</div>보통 정도예요</div></label>
+        <label><input type="radio" name="q11" value="P"> <div class="opt-btn"><div class="opt-emoji">🌀</div>필요한 게 어딘가 있어요</div></label>
+      </div>
+    </div>
+
+    <div class="q-card dim-J-card">
+      <div class="q-text"><span class="q-num">12</span>주말 계획은?</div>
+      <div class="options">
+        <label><input type="radio" name="q12" value="J"> <div class="opt-btn"><div class="opt-emoji">📋</div>미리 계획을 세워요</div></label>
+        <label><input type="radio" name="q12" value="M"> <div class="opt-btn"><div class="opt-emoji">🌤️</div>대략 생각만 해요</div></label>
+        <label><input type="radio" name="q12" value="P"> <div class="opt-btn"><div class="opt-emoji">🎲</div>그냥 즉흥적으로 해요</div></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-wrap">
+    <button id="save-btn" onclick="calcResult()">✨ 결과 보기</button>
+    <div class="save-hint">12개 질문에 모두 답하면 결과를 볼 수 있어요 😊</div>
+  </div>
+
+</div><!-- /quiz-page -->
+
+<!-- RESULT PAGE -->
+<div id="result-page">
+  <div class="result-hero">
+    <span class="mbti-emoji" id="r-emoji">🌟</span>
+    <div class="mbti-type" id="r-type" style="color:#6ECFB5">ENFP</div>
+    <div class="mbti-nickname" id="r-nickname">활발한 탐험가</div>
+    <p class="mbti-desc" id="r-desc"></p>
+    <div class="mbti-tags" id="r-tags"></div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <h3 id="str-title" style="color:#6ECFB5">⭐ 나의 강점</h3>
+      <ul id="r-strengths"></ul>
+    </div>
+    <div class="info-card">
+      <h3 id="wk-title" style="color:#F9956A">💪 더 키울 점</h3>
+      <ul id="r-weaknesses"></ul>
+    </div>
+  </div>
+
+  <div class="study-card">
+    <h3 id="study-title" style="color:#A78BFA">📚 이런 방법으로 공부해봐요!</h3>
+    <div class="study-steps" id="r-study"></div>
+  </div>
+
+  <div class="jobs-card">
+    <h3 id="job-title" style="color:#FFCC4D">🚀 잘 어울리는 미래 직업</h3>
+    <div class="job-chips" id="r-jobs"></div>
+  </div>
+
+  <div class="retry-wrap">
+    <button id="retry-btn" onclick="retry()">🔄 다시 해볼게요!</button>
+  </div>
+</div>
+
+<div class="error-toast" id="error-toast">⚠️ 아직 답하지 않은 질문이 있어요!</div>
+
+<script>
+const MBTI_DATA = {
+  ENFP: {
+    emoji: '🦋', color: '#6ECFB5', bg: '#E8FAF5',
+    nickname: '반짝이는 나비',
+    desc: '에너지가 넘치고 상상력이 풍부한 나비처럼, 새로운 것을 탐험하기 좋아해요! 친구들에게 희망과 기쁨을 가져다주는 멋진 사람이에요.',
+    tags: ['#활발함', '#창의력', '#공감력', '#자유로운영혼'],
+    strengths: ['🌈 상상력이 폭발해요', '🤗 친구 감정을 잘 이해해요', '💡 아이디어가 넘쳐요', '😄 분위기를 밝게 만들어요'],
+    weaknesses: ['⏰ 약속 시간 지키기 연습!', '📋 계획을 끝까지 마치기', '🎯 한 가지에 집중하기', '🧘 차분하게 기다리기'],
+    study: [
+      { icon: '🎨', text: '그림·만화로 공부 내용을 표현해봐요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '👫', text: '친구랑 서로 선생님 역할을 해봐요', bg: '#FFF1EB', color: '#C46A2A' },
+      { icon: '🎲', text: '공부를 게임처럼 즐겁게 만들어봐요', bg: '#F3F0FF', color: '#7C3AED' },
+    ],
+    jobs: ['🎬 영화감독', '🎨 미술가', '✍️ 작가', '🧑‍🏫 선생님', '🎤 방송인', '🌍 탐험가']
+  },
+  ENTP: {
+    emoji: '🦅', color: '#A78BFA', bg: '#F3F0FF',
+    nickname: '도전하는 독수리',
+    desc: '빠르게 생각하고 토론을 즐기는 독수리! 어려운 문제도 재미있게 풀어내는 뛰어난 두뇌를 가졌어요.',
+    tags: ['#호기심왕', '#토론왕', '#빠른두뇌', '#도전정신'],
+    strengths: ['💡 문제 해결을 잘해요', '🗣️ 토론에서 빛을 발해요', '🧠 빠르게 생각해요', '🔥 새로운 도전을 즐겨요'],
+    weaknesses: ['😤 다른 의견도 존중하기', '📌 끝까지 마무리하기', '🤝 팀원 배려하기', '📚 꼼꼼히 정리하기'],
+    study: [
+      { icon: '❓', text: '왜 그런지 이유를 찾으며 공부해요', bg: '#F3F0FF', color: '#7C3AED' },
+      { icon: '🧪', text: '실험하고 결과를 예측해봐요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '🏆', text: '혼자 퀴즈 대결을 만들어봐요', bg: '#FFF1EB', color: '#C46A2A' },
+    ],
+    jobs: ['👨‍💻 프로그래머', '🔬 과학자', '⚖️ 변호사', '🧑‍💼 사업가', '🎮 게임 개발자', '🤖 AI 연구원']
+  },
+  ENFJ: {
+    emoji: '🌻', color: '#FFCC4D', bg: '#FFFBEA',
+    nickname: '따뜻한 해바라기',
+    desc: '모두를 따뜻하게 감싸주는 해바라기! 친구들의 마음을 잘 알아주고 함께 성장하는 것을 좋아해요.',
+    tags: ['#리더십', '#공감력', '#따뜻함', '#책임감'],
+    strengths: ['🤗 친구 마음을 잘 이해해요', '👑 모둠을 잘 이끌어요', '💬 설득력이 좋아요', '🌟 영감을 줘요'],
+    weaknesses: ['😊 내 감정도 챙기기', '🙅 거절도 할 수 있어요', '💪 혼자 할 때도 자신감!', '🧘 쉴 때 제대로 쉬기'],
+    study: [
+      { icon: '👩‍🏫', text: '친구에게 설명하면서 기억해요', bg: '#FFFBEA', color: '#C48A00' },
+      { icon: '📖', text: '이야기·소설로 연결해서 외워요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '🗓️', text: '계획표를 만들고 함께 지켜요', bg: '#F3F0FF', color: '#7C3AED' },
+    ],
+    jobs: ['🧑‍🏫 선생님', '🏥 의사', '🤝 사회복지사', '🎤 강연가', '👨‍⚕️ 심리상담사', '🌍 외교관']
+  },
+  ENTJ: {
+    emoji: '🦁', color: '#F9956A', bg: '#FFF1EB',
+    nickname: '용감한 사자왕',
+    desc: '목표를 향해 당당히 나아가는 사자왕! 리더십이 넘치고 어떤 상황도 해쳐나가는 강인한 성격이에요.',
+    tags: ['#리더', '#목표지향', '#결단력', '#열정'],
+    strengths: ['🎯 목표를 꼭 이뤄요', '👑 자연스럽게 리더가 돼요', '⚡ 결정이 빨라요', '🏗️ 계획대로 실행해요'],
+    weaknesses: ['😊 친구 기분도 살피기', '🐢 천천히 여유 갖기', '🎧 다른 의견 듣기', '💝 칭찬도 많이 해주기'],
+    study: [
+      { icon: '🎯', text: '목표와 보상을 정해두고 공부해요', bg: '#FFF1EB', color: '#C46A2A' },
+      { icon: '📊', text: '표와 그래프로 정리하면 좋아요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '⏱️', text: '시간을 정해놓고 집중 공부해요', bg: '#F3F0FF', color: '#7C3AED' },
+    ],
+    jobs: ['👨‍💼 CEO', '⚖️ 판사', '🏛️ 정치인', '🎖️ 군인', '🏗️ 건축가', '💹 펀드매니저']
+  },
+  INFP: {
+    emoji: '🌙', color: '#A78BFA', bg: '#F3F0FF',
+    nickname: '꿈꾸는 달토끼',
+    desc: '풍부한 상상력과 따뜻한 마음을 가진 달토끼! 세상을 더 아름답게 만들고 싶어하는 순수한 마음의 소유자예요.',
+    tags: ['#감수성', '#창의력', '#이상주의', '#따뜻함'],
+    strengths: ['✍️ 글쓰기 실력이 뛰어나요', '💡 독창적인 생각을 해요', '💝 다른 사람을 잘 도와요', '🌈 꿈과 비전이 있어요'],
+    weaknesses: ['💬 내 의견 자신있게 말하기', '🏃 행동으로 옮기기', '😊 나 자신도 사랑하기', '📅 현실적인 계획 세우기'],
+    study: [
+      { icon: '📓', text: '일기나 이야기로 개념을 적어봐요', bg: '#F3F0FF', color: '#7C3AED' },
+      { icon: '🎵', text: '좋아하는 음악 들으며 공부해요', bg: '#FFFBEA', color: '#C48A00' },
+      { icon: '🎨', text: '그림과 색깔로 노트를 꾸며요', bg: '#E8FAF5', color: '#2DAB8D' },
+    ],
+    jobs: ['✍️ 소설가', '🎨 화가', '🎵 음악가', '🧑‍🏫 국어선생님', '🌱 환경운동가', '🧸 애니메이터']
+  },
+  INTP: {
+    emoji: '🦉', color: '#6ECFB5', bg: '#E8FAF5',
+    nickname: '지혜로운 올빼미',
+    desc: '깊이 생각하고 분석하는 것을 즐기는 올빼미! 복잡한 수수께끼도 논리적으로 풀어내는 천재적인 두뇌를 가졌어요.',
+    tags: ['#분석력', '#논리적', '#호기심', '#독창적'],
+    strengths: ['🧩 논리적으로 생각해요', '🔍 깊이 파고들어요', '💡 독창적인 아이디어', '📐 정확하고 꼼꼼해요'],
+    weaknesses: ['👥 친구들과 어울리기', '💬 생각을 말로 표현하기', '⏰ 제때 마무리하기', '🤝 협동 프로젝트 도전하기'],
+    study: [
+      { icon: '🔬', text: '왜 그런지 원리를 탐구해요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '🗺️', text: '마인드맵으로 개념을 연결해요', bg: '#F3F0FF', color: '#7C3AED' },
+      { icon: '🧪', text: '직접 실험해보면 이해가 빨라요', bg: '#FFFBEA', color: '#C48A00' },
+    ],
+    jobs: ['💻 프로그래머', '🔬 물리학자', '🧬 생명과학자', '📐 수학자', '🤖 로봇공학자', '🕵️ 연구원']
+  },
+  INFJ: {
+    emoji: '🌺', color: '#F9956A', bg: '#FFF1EB',
+    nickname: '신비로운 꽃',
+    desc: '깊은 통찰력과 따뜻한 마음을 가진 신비로운 꽃! 남들이 보지 못하는 것을 보는 특별한 능력이 있어요.',
+    tags: ['#통찰력', '#공감력', '#이상주의', '#신비로운'],
+    strengths: ['🔮 미래를 잘 예측해요', '💝 깊이 공감해요', '🎯 집중력이 대단해요', '✍️ 표현력이 뛰어나요'],
+    weaknesses: ['😊 완벽하지 않아도 괜찮아요', '💬 먼저 말 걸어보기', '🌞 밝은 면 보기', '🏃 결정 빨리 해보기'],
+    study: [
+      { icon: '📝', text: '조용한 곳에서 혼자 집중해요', bg: '#FFF1EB', color: '#C46A2A' },
+      { icon: '🔗', text: '배운 것들을 서로 연결해봐요', bg: '#F3F0FF', color: '#7C3AED' },
+      { icon: '💭', text: '배운 의미와 이유를 생각해봐요', bg: '#E8FAF5', color: '#2DAB8D' },
+    ],
+    jobs: ['🧑‍⚕️ 심리상담사', '✍️ 작가', '🎨 예술가', '🏥 의사', '🧑‍🏫 선생님', '🌱 사회활동가']
+  },
+  INTJ: {
+    emoji: '🐉', color: '#6ECFB5', bg: '#E8FAF5',
+    nickname: '전략가 용',
+    desc: '혼자서도 뚝딱 계획을 세우는 전략가 용! 목표를 향해 묵묵히 나아가는 강인하고 독립적인 성격이에요.',
+    tags: ['#전략가', '#독립적', '#목표지향', '#분석적'],
+    strengths: ['📊 계획을 잘 세워요', '🧠 독립적으로 생각해요', '🎯 목표를 꼭 이뤄요', '🔍 꼼꼼하게 분석해요'],
+    weaknesses: ['😊 감정 표현도 연습해요', '👥 팀 활동도 즐기기', '💬 칭찬도 받아들이기', '🐣 실수해도 괜찮아요'],
+    study: [
+      { icon: '📋', text: '체계적인 공부 계획을 세워요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '🏆', text: '목표 달성 후 보상을 정해요', bg: '#FFFBEA', color: '#C48A00' },
+      { icon: '🔬', text: '원리와 이론을 깊이 파해쳐요', bg: '#F3F0FF', color: '#7C3AED' },
+    ],
+    jobs: ['🏗️ 건축가', '💻 소프트웨어공학자', '🔬 연구원', '📡 우주과학자', '🤖 AI개발자', '📐 수학교사']
+  },
+  ESFP: {
+    emoji: '🐬', color: '#6ECFB5', bg: '#E8FAF5',
+    nickname: '신나는 돌고래',
+    desc: '에너지 넘치고 재미있는 것을 사랑하는 돌고래! 분위기를 즐겁게 만들고 현재 순간을 소중히 여겨요.',
+    tags: ['#활발함', '#유머', '#현재충실', '#사교적'],
+    strengths: ['😄 분위기를 신나게 해요', '👫 사람들과 잘 어울려요', '🎉 즉흥적으로 잘 해요', '💃 행동력이 넘쳐요'],
+    weaknesses: ['📅 계획 세우는 연습하기', '🎯 끝까지 집중하기', '🧘 차분히 생각해보기', '⏰ 마감 시간 지키기'],
+    study: [
+      { icon: '🎮', text: '게임·퀴즈로 재미있게 공부해요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '🎬', text: '영상·만화로 개념을 익혀요', bg: '#FFF1EB', color: '#C46A2A' },
+      { icon: '🤸', text: '몸을 움직이며 외우면 잘 돼요', bg: '#FFFBEA', color: '#C48A00' },
+    ],
+    jobs: ['🎤 연예인', '🎨 디자이너', '👨‍🍳 요리사', '🏋️ 운동선수', '🧑‍🏫 체육선생님', '🎭 배우']
+  },
+  ESTP: {
+    emoji: '🐯', color: '#F9956A', bg: '#FFF1EB',
+    nickname: '용감한 호랑이',
+    desc: '도전을 즐기고 빠른 판단력을 가진 호랑이! 문제가 생기면 바로 행동으로 해결하는 실전파예요.',
+    tags: ['#행동파', '#용감함', '#현실적', '#순발력'],
+    strengths: ['⚡ 순발력이 대단해요', '🔧 실제로 바로 해봐요', '😎 어려운 상황도 침착해요', '💪 체력과 에너지가 넘쳐요'],
+    weaknesses: ['🤔 먼저 생각하고 행동하기', '📚 기초를 튼튼히 쌓기', '💝 친구 감정 살피기', '🧘 감정 조절 연습하기'],
+    study: [
+      { icon: '🏃', text: '직접 해보면서 익히는 게 최고예요', bg: '#FFF1EB', color: '#C46A2A' },
+      { icon: '🏅', text: '단기 목표를 세우고 달성해봐요', bg: '#FFFBEA', color: '#C48A00' },
+      { icon: '🎯', text: '실제 문제에 바로 적용해봐요', bg: '#E8FAF5', color: '#2DAB8D' },
+    ],
+    jobs: ['🏋️ 운동선수', '👮 경찰관', '🚒 소방관', '✈️ 파일럿', '🎮 e스포츠선수', '👨‍🍳 요리사']
+  },
+  ESFJ: {
+    emoji: '🐻', color: '#FFCC4D', bg: '#FFFBEA',
+    nickname: '다정한 곰돌이',
+    desc: '모두를 챙기는 따뜻한 곰돌이! 친구들을 돌보고 사이좋게 지내는 것을 가장 중요하게 생각해요.',
+    tags: ['#친절함', '#배려심', '#책임감', '#사교적'],
+    strengths: ['💝 친구를 잘 챙겨요', '🤝 협동을 잘해요', '📋 약속을 잘 지켜요', '😊 분위기를 포근하게 해요'],
+    weaknesses: ['💪 내 의견도 자신있게 말하기', '😊 나도 좀 쉬어가기', '🙅 거절도 할 수 있어요', '🎯 비판도 성장 기회로 보기'],
+    study: [
+      { icon: '👫', text: '친구랑 같이 공부하면 최고예요', bg: '#FFFBEA', color: '#C48A00' },
+      { icon: '📖', text: '규칙적으로 복습하면 잘 외워요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '🌟', text: '잘한 것을 칭찬해주세요!', bg: '#F3F0FF', color: '#7C3AED' },
+    ],
+    jobs: ['🏥 간호사', '🧑‍🏫 선생님', '👨‍🍳 요리사', '🤝 사회복지사', '💆 미용사', '🏨 호텔리어']
+  },
+  ESTJ: {
+    emoji: '🦊', color: '#F9956A', bg: '#FFF1EB',
+    nickname: '영리한 여우대장',
+    desc: '규칙을 잘 지키고 모둠을 이끄는 여우 대장! 맡은 일을 끝까지 해내는 믿음직한 성격이에요.',
+    tags: ['#리더십', '#책임감', '#실용적', '#체계적'],
+    strengths: ['📋 계획대로 실행해요', '👑 리더 역할을 잘 해요', '🏆 목표를 이루는 힘이 있어요', '🤝 신뢰할 수 있어요'],
+    weaknesses: ['😊 유연하게 바꿔보기', '💝 감정도 배려하기', '🎉 즉흥적인 재미도 경험하기', '🌱 새로운 방법도 시도하기'],
+    study: [
+      { icon: '📚', text: '체계적인 교재로 순서대로 해요', bg: '#FFF1EB', color: '#C46A2A' },
+      { icon: '📝', text: '오답노트로 틀린 부분을 정리해요', bg: '#FFFBEA', color: '#C48A00' },
+      { icon: '⏰', text: '시간표를 만들어 규칙적으로 해요', bg: '#E8FAF5', color: '#2DAB8D' },
+    ],
+    jobs: ['👮 경찰관', '🏦 은행원', '⚖️ 판사', '👨‍💼 공무원', '🏗️ 관리자', '🧑‍🏫 수학선생님']
+  },
+  ISFP: {
+    emoji: '🦝', color: '#6ECFB5', bg: '#E8FAF5',
+    nickname: '자유로운 너구리',
+    desc: '자유롭고 감성적인 너구리! 아름다운 것을 만드는 것을 좋아하고 내 방식대로 살아가는 예술가 기질이 있어요.',
+    tags: ['#감성적', '#자유로운', '#예술적', '#온화함'],
+    strengths: ['🎨 예술 감각이 뛰어나요', '😊 온화하고 친절해요', '🌿 현재에 충실해요', '👐 실제로 만들기를 잘해요'],
+    weaknesses: ['💬 내 생각 표현하기', '📅 계획 세우고 지키기', '💪 어려운 상황도 이겨내기', '🎯 목표를 크게 세우기'],
+    study: [
+      { icon: '🎨', text: '컬러펜으로 예쁘게 노트 꾸며요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '🎵', text: '음악 들으며 혼자 공부해요', bg: '#F3F0FF', color: '#7C3AED' },
+      { icon: '📷', text: '사진이나 그림으로 기억해요', bg: '#FFFBEA', color: '#C48A00' },
+    ],
+    jobs: ['🎨 화가', '📸 사진작가', '🎵 음악가', '👗 패션디자이너', '🍰 제과제빵사', '🌿 플로리스트']
+  },
+  ISTP: {
+    emoji: '🦎', color: '#6ECFB5', bg: '#E8FAF5',
+    nickname: '냉철한 도마뱀',
+    desc: '조용하지만 손재주가 뛰어난 도마뱀! 어떤 도구든 잘 다루고 문제를 빠르게 해결하는 능력이 있어요.',
+    tags: ['#손재주', '#논리적', '#독립적', '#침착함'],
+    strengths: ['🔧 손으로 만드는 것을 잘해요', '🧠 논리적으로 분석해요', '😎 침착하게 행동해요', '🔍 꼼꼼하게 관찰해요'],
+    weaknesses: ['💬 감정도 나눠보기', '👥 팀워크도 중요해요', '📅 미래도 생각해보기', '😊 나를 더 표현하기'],
+    study: [
+      { icon: '🔧', text: '직접 만들고 실험하면서 배워요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '📐', text: '도형·그래프·도표가 잘 맞아요', bg: '#FFFBEA', color: '#C48A00' },
+      { icon: '🎮', text: '혼자 집중해서 도전하기를 좋아해요', bg: '#F3F0FF', color: '#7C3AED' },
+    ],
+    jobs: ['⚙️ 기계공학자', '🚒 소방관', '🔬 실험연구원', '💻 해커·보안전문가', '🏎️ 레이서', '✈️ 파일럿']
+  },
+  ISFJ: {
+    emoji: '🐨', color: '#FFCC4D', bg: '#FFFBEA',
+    nickname: '포근한 코알라',
+    desc: '조용하고 따뜻한 마음으로 주변을 돌보는 코알라! 책임감이 강하고 사람들을 소중히 여기는 성격이에요.',
+    tags: ['#배려심', '#책임감', '#섬세함', '#헌신적'],
+    strengths: ['💝 주변을 잘 챙겨요', '📋 꼼꼼하게 기억해요', '🤝 믿을 수 있어요', '🏠 안정감을 줘요'],
+    weaknesses: ['💬 내 의견도 말해보기', '🌱 새로운 것도 도전하기', '😊 나 자신도 돌보기', '🎯 변화에 유연해지기'],
+    study: [
+      { icon: '📖', text: '교과서를 꼼꼼히 읽어봐요', bg: '#FFFBEA', color: '#C48A00' },
+      { icon: '📝', text: '복습을 규칙적으로 해요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '🌟', text: '도움받는 것을 두려워 말아요', bg: '#F3F0FF', color: '#7C3AED' },
+    ],
+    jobs: ['🏥 간호사', '🧑‍🏫 선생님', '🤝 사회복지사', '👨‍⚕️ 의사', '📚 사서', '🏦 행정직']
+  },
+  ISTJ: {
+    emoji: '🐻‍❄️', color: '#6ECFB5', bg: '#E8FAF5',
+    nickname: '듬직한 북극곰',
+    desc: '믿음직하고 성실한 북극곰! 맡은 일은 반드시 해내고 규칙을 소중히 여기는 듬직한 성격이에요.',
+    tags: ['#성실함', '#책임감', '#꼼꼼함', '#신뢰'],
+    strengths: ['✅ 시작한 일은 끝내요', '📋 규칙을 잘 지켜요', '🔍 꼼꼼하게 확인해요', '🏆 꾸준하게 노력해요'],
+    weaknesses: ['🌈 새로운 방법도 시도하기', '😊 감정 표현도 연습하기', '🎉 가끔 즉흥적으로 즐기기', '💡 다른 사람 아이디어 받아들이기'],
+    study: [
+      { icon: '📆', text: '매일 정해진 시간에 공부해요', bg: '#E8FAF5', color: '#2DAB8D' },
+      { icon: '📝', text: '노트 정리를 꼼꼼히 해요', bg: '#FFFBEA', color: '#C48A00' },
+      { icon: '🔄', text: '반복 복습이 기억에 잘 남아요', bg: '#F3F0FF', color: '#7C3AED' },
+    ],
+    jobs: ['👮 경찰관', '⚖️ 판사', '🏦 공무원', '📊 회계사', '👨‍✈️ 군인', '🧑‍🏫 선생님']
+  }
+};
+
+// Progress tracking
+function updateProgress() {
+  const questions = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'];
+  const answered = questions.filter(q => document.querySelector(`input[name="${q}"]:checked`)).length;
+  document.getElementById('prog-fill').style.width = (answered / 12 * 100) + '%';
+  document.getElementById('prog-text').textContent = `${answered} / 12 완료`;
+}
+
+document.querySelectorAll('input[type="radio"]').forEach(r => r.addEventListener('change', updateProgress));
+
+function calcResult() {
+  const questions = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'];
+  const unanswered = questions.filter(q => !document.querySelector(`input[name="${q}"]:checked`));
+  if (unanswered.length > 0) {
+    const toast = document.getElementById('error-toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+    return;
+  }
+
+  const get = name => document.querySelector(`input[name="${name}"]:checked`).value;
+  const score = (vals, plus, minus) => {
+    let s = 0;
+    vals.forEach(v => { if (v === plus) s++; else if (v === minus) s--; });
+    return s;
+  };
+
+  const EI = score([get('q1'), get('q2'), get('q3')], 'E', 'I');
+  const SN = score([get('q4'), get('q5'), get('q6')], 'S', 'N');
+  const TF = score([get('q7'), get('q8'), get('q9')], 'T', 'F');
+  const JP = score([get('q10'), get('q11'), get('q12')], 'J', 'P');
+
+  const type = (EI >= 0 ? 'E' : 'I') + (SN >= 0 ? 'S' : 'N') + (TF >= 0 ? 'T' : 'F') + (JP >= 0 ? 'J' : 'P');
+  showResult(type);
+}
+
+function showResult(type) {
+  const d = MBTI_DATA[type];
+  document.getElementById('r-emoji').textContent = d.emoji;
+  const typeEl = document.getElementById('r-type');
+  typeEl.textContent = type;
+  typeEl.style.color = d.color;
+  document.getElementById('r-nickname').textContent = d.nickname;
+  document.getElementById('r-desc').textContent = d.desc;
+
+  // Tags
+  const tagsEl = document.getElementById('r-tags');
+  tagsEl.innerHTML = d.tags.map(t =>
+    `<span class="tag" style="background:${d.bg};color:${d.color}">${t}</span>`
+  ).join('');
+
+  // Strengths
+  const strEl = document.getElementById('r-strengths');
+  strEl.innerHTML = d.strengths.map(s =>
+    `<li><span class="li-dot">✅</span>${s}</li>`
+  ).join('');
+
+  // Weaknesses
+  const wkEl = document.getElementById('r-weaknesses');
+  wkEl.innerHTML = d.weaknesses.map(w =>
+    `<li><span class="li-dot">🌱</span>${w}</li>`
+  ).join('');
+
+  // Study
+  const studyEl = document.getElementById('r-study');
+  studyEl.innerHTML = d.study.map(s =>
+    `<div class="study-step" style="background:${s.bg};color:${s.color}">
+      <span class="step-icon">${s.icon}</span>${s.text}
+    </div>`
+  ).join('');
+
+  // Jobs
+  const jobsEl = document.getElementById('r-jobs');
+  jobsEl.innerHTML = d.jobs.map(j =>
+    `<span class="job-chip" style="background:${d.bg};color:${d.color}">${j}</span>`
+  ).join('');
+
+  // Section header colors
+  document.getElementById('str-title').style.color = d.color;
+  document.getElementById('study-title').style.color = d.color;
+  document.getElementById('job-title').style.color = d.color;
+
+  document.getElementById('quiz-page').style.display = 'none';
+  document.getElementById('result-page').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function retry() {
+  document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  updateProgress();
+  document.getElementById('result-page').style.display = 'none';
+  document.getElementById('quiz-page').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
