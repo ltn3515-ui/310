@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 기억력 매칭 게임</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nanum+Round+Square:wght@400;700;800&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+  :root {
+    --sky:    #4FC3F7;
+    --mint:   #4DD0A1;
+    --coral:  #FF7B6B;
+    --yellow: #FFD54F;
+    --violet: #B39DDB;
+    --pink:   #F48FB1;
+    --white:  #FFFFFF;
+    --bg:     #F0F9FF;
+    --card-back: #5C6BC0;
+    --card-back2: #7986CB;
+    --shadow: rgba(0,0,0,0.12);
+    --text-dark: #2D3A4A;
+    --text-mid:  #5A6A7A;
+    --success:  #43A047;
+    --fail:     #E53935;
+    --radius: 18px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 20%, #c8e6ff55 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, #d0f4e555 0%, transparent 40%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 12px 32px;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  header h1 {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--text-dark);
+    letter-spacing: -0.5px;
+  }
+  header h1 span { color: #5C6BC0; }
+
+  /* ── Timer bar ── */
+  .timer-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    border-radius: 50px;
+    padding: 8px 22px;
+    box-shadow: 0 4px 16px var(--shadow);
+    margin-bottom: 22px;
+  }
+  .timer-icon { font-size: 1.4rem; }
+  #timer-display {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--text-dark);
+    min-width: 56px;
+    text-align: center;
+    transition: color .3s;
+  }
+  #timer-display.urgent { color: var(--coral); animation: pulse .6s infinite alternate; }
+  @keyframes pulse { to { transform: scale(1.12); } }
+
+  #progress-bar-wrap {
+    width: 200px;
+    height: 10px;
+    background: #E0E0E0;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  #progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mint), var(--sky));
+    border-radius: 10px;
+    transition: width .5s linear, background .5s;
+    width: 100%;
+  }
+  #progress-bar.urgent { background: linear-gradient(90deg, var(--coral), #FF8A65); }
+
+  /* ── Main layout ── */
+  .main-wrap {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 960px;
+  }
+
+  /* ── Game board ── */
+  .game-section { flex: 1; }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  /* ── Card ── */
+  .card {
+    aspect-ratio: 1;
+    cursor: pointer;
+    perspective: 600px;
+    border-radius: var(--radius);
+  }
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    border-radius: var(--radius);
+    transition: opacity .25s ease;
+  }
+  /* fade effect */
+  .card.flipping .card-inner { opacity: 0; }
+  .card.flipped .card-inner  { opacity: 1; }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+    box-shadow: 0 6px 20px var(--shadow);
+    user-select: none;
+  }
+  .card-back {
+    background: linear-gradient(135deg, var(--card-back), var(--card-back2));
+    color: white;
+    font-size: 1.8rem;
+  }
+  .card-back::after { content: '?'; font-weight: 900; opacity: .7; }
+
+  .card-front {
+    background: var(--white);
+    display: none;
+    border: 3px solid transparent;
+    transition: border-color .2s, background .2s, transform .1s;
+  }
+  .card.is-open .card-back { display: none; }
+  .card.is-open .card-front { display: flex; }
+
+  .card.matched .card-front {
+    background: #E8F5E9;
+    border-color: var(--mint);
+    animation: matchBounce .4s ease;
+  }
+  @keyframes matchBounce {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.12); }
+    70%  { transform: scale(.96); }
+    100% { transform: scale(1); }
+  }
+
+  .card.wrong .card-front {
+    background: #FFEBEE;
+    border-color: var(--coral);
+    animation: wrongShake .4s ease;
+  }
+  @keyframes wrongShake {
+    0%, 100% { transform: translateX(0); }
+    25%  { transform: translateX(-8px); }
+    75%  { transform: translateX(8px); }
+  }
+
+  /* ── Control buttons ── */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    flex: 1;
+    padding: 12px 0;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s, filter .15s;
+    box-shadow: 0 4px 14px var(--shadow);
+    letter-spacing: -.3px;
+  }
+  .btn:hover  { filter: brightness(1.06); transform: translateY(-2px); box-shadow: 0 8px 20px var(--shadow); }
+  .btn:active { transform: translateY(0); box-shadow: 0 2px 8px var(--shadow); }
+
+  .btn-start  { background: linear-gradient(135deg, #5C6BC0, #7986CB); color: #fff; }
+  .btn-reset  { background: linear-gradient(135deg, var(--coral), #FF8A65); color: #fff; }
+
+  /* ── Score panel ── */
+  .score-section {
+    width: 230px;
+    flex-shrink: 0;
+  }
+  .score-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    box-shadow: 0 6px 24px var(--shadow);
+  }
+  .score-card h2 {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--text-dark);
+    text-align: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px dashed #E0E0E0;
+  }
+
+  .team-rows { display: flex; flex-direction: column; gap: 10px; }
+
+  .team-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #F7F9FF;
+    border-radius: 12px;
+    padding: 8px 10px;
+    transition: background .2s;
+  }
+  .team-label {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--text-mid);
+    min-width: 36px;
+  }
+  .team-badge {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .score-num {
+    flex: 1;
+    font-size: 1.5rem;
+    font-weight: 900;
+    text-align: center;
+    color: var(--text-dark);
+    min-width: 32px;
+  }
+  .score-btn {
+    width: 32px; height: 32px;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .12s, filter .12s;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .score-btn:hover  { filter: brightness(1.1); transform: scale(1.1); }
+  .score-btn:active { transform: scale(.93); }
+  .score-plus  { background: var(--mint); color: #fff; }
+  .score-minus {
+    background: #EEE;
+    color: var(--text-mid);
+    font-size: 1rem;
+  }
+
+  .team-colors {
+    background-colors: ['#FF7B6B','#FFD54F','#4DD0A1','#4FC3F7','#B39DDB','#F48FB1'];
+  }
+
+  .score-footer {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 2px dashed #E0E0E0;
+  }
+  .btn-reset-score {
+    width: 100%;
+    padding: 10px 0;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #EF9A9A, var(--coral));
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter .15s, transform .15s;
+    box-shadow: 0 4px 12px rgba(255,123,107,.25);
+  }
+  .btn-reset-score:hover  { filter: brightness(1.08); transform: translateY(-2px); }
+  .btn-reset-score:active { transform: translateY(0); }
+
+  /* ── Overlay (time up / clear) ── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.show { display: flex; }
+
+  .overlay-box {
+    background: var(--white);
+    border-radius: 24px;
+    padding: 40px 48px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    animation: popIn .35s cubic-bezier(.34,1.56,.64,1);
+    max-width: 340px;
+    width: 90%;
+  }
+  @keyframes popIn {
+    from { transform: scale(.6); opacity: 0; }
+    to   { transform: scale(1);  opacity: 1; }
+  }
+  .overlay-icon { font-size: 4rem; margin-bottom: 12px; }
+  .overlay-title {
+    font-size: 1.7rem;
+    font-weight: 900;
+    color: var(--text-dark);
+    margin-bottom: 6px;
+  }
+  .overlay-sub {
+    font-size: 1rem;
+    color: var(--text-mid);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .overlay-btn {
+    padding: 13px 36px;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #5C6BC0, #7986CB);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter .15s, transform .15s;
+    box-shadow: 0 4px 16px rgba(92,107,192,.3);
+  }
+  .overlay-btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
+
+  /* ── Status message ── */
+  #status-msg {
+    min-height: 22px;
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--text-mid);
+    text-align: center;
+    margin-top: 10px;
+    transition: color .2s;
+  }
+  #status-msg.good { color: var(--success); }
+  #status-msg.bad  { color: var(--fail); }
+
+  /* Responsive */
+  @media (max-width: 680px) {
+    .main-wrap { flex-direction: column; align-items: center; }
+    .score-section { width: 100%; max-width: 420px; }
+    .board { gap: 10px; }
+    header h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎮 기억력 <span>매칭 게임</span></h1>
+</header>
+
+<!-- Timer -->
+<div class="timer-wrap">
+  <span class="timer-icon">⏱️</span>
+  <div id="timer-display">60</div>
+  <div id="progress-bar-wrap">
+    <div id="progress-bar"></div>
+  </div>
+</div>
+
+<div class="main-wrap">
+
+  <!-- Game board -->
+  <div class="game-section">
+    <div class="board" id="board"></div>
+    <div id="status-msg">▶ 시작 버튼을 눌러 게임을 시작하세요!</div>
+    <div class="controls">
+      <button class="btn btn-start" id="btn-start">▶ 시작</button>
+      <button class="btn btn-reset" id="btn-reset">🔄 다시하기</button>
+    </div>
+  </div>
+
+  <!-- Score panel -->
+  <div class="score-section">
+    <div class="score-card">
+      <h2>🏆 조별 점수판</h2>
+      <div class="team-rows" id="team-rows"></div>
+      <div class="score-footer">
+        <button class="btn-reset-score" id="btn-reset-score">🗑️ 점수 초기화</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <div class="overlay-icon" id="overlay-icon">🎉</div>
+    <div class="overlay-title" id="overlay-title">완료!</div>
+    <div class="overlay-sub" id="overlay-sub">모든 카드를 찾았어요!</div>
+    <button class="overlay-btn" id="overlay-btn">다시 시작</button>
+  </div>
+</div>
+
+<script>
+  // ── Config ──────────────────────────────────────────
+  const EMOJIS   = ['🐶','🐱','🦊','🐸','🦁','🐧','🦄','🌈','⭐','🍎','🍕','🎸'];
+  const PAIRS    = EMOJIS.slice(0, 6);          // 6쌍 = 12장
+  const TOTAL_T  = 60;                          // 초
+
+  const TEAM_DATA = [
+    { name: '1조', color: '#FF7B6B', emoji: '🔴' },
+    { name: '2조', color: '#FFD54F', emoji: '🟡' },
+    { name: '3조', color: '#4DD0A1', emoji: '🟢' },
+    { name: '4조', color: '#4FC3F7', emoji: '🔵' },
+    { name: '5조', color: '#B39DDB', emoji: '🟣' },
+    { name: '6조', color: '#F48FB1', emoji: '🩷' },
+  ];
+
+  // ── State ───────────────────────────────────────────
+  let cards        = [];
+  let opened       = [];
+  let matchedCount = 0;
+  let locked       = false;
+  let timerID      = null;
+  let timeLeft     = TOTAL_T;
+  let running      = false;
+  let scores       = Array(6).fill(0);
+
+  // ── DOM refs ────────────────────────────────────────
+  const board      = document.getElementById('board');
+  const timerEl    = document.getElementById('timer-display');
+  const barEl      = document.getElementById('progress-bar');
+  const statusEl   = document.getElementById('status-msg');
+  const overlay    = document.getElementById('overlay');
+  const oIcon      = document.getElementById('overlay-icon');
+  const oTitle     = document.getElementById('overlay-title');
+  const oSub       = document.getElementById('overlay-sub');
+  const oBtn       = document.getElementById('overlay-btn');
+  const btnStart   = document.getElementById('btn-start');
+  const btnReset   = document.getElementById('btn-reset');
+  const teamRowsEl = document.getElementById('team-rows');
+
+  // ── Shuffle ─────────────────────────────────────────
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // ── Build board ─────────────────────────────────────
+  function buildBoard() {
+    board.innerHTML = '';
+    cards = [];
+    opened = [];
+    matchedCount = 0;
+    locked = false;
+
+    const deck = shuffle([...PAIRS, ...PAIRS]);
+
+    deck.forEach((emoji, idx) => {
+      const cardEl = document.createElement('div');
+      cardEl.className = 'card';
+      cardEl.dataset.emoji = emoji;
+      cardEl.dataset.idx   = idx;
+      cardEl.innerHTML = `
+        <div class="card-inner">
+          <div class="card-face card-back"></div>
+          <div class="card-face card-front">${emoji}</div>
+        </div>`;
+      cardEl.addEventListener('click', () => onCardClick(cardEl));
+      board.appendChild(cardEl);
+      cards.push(cardEl);
+    });
+  }
+
+  // ── Card click ───────────────────────────────────────
+  function onCardClick(cardEl) {
+    if (!running)                    return;
+    if (locked)                      return;
+    if (cardEl.classList.contains('is-open'))   return;
+    if (cardEl.classList.contains('matched'))   return;
+
+    flipCard(cardEl, true);
+    opened.push(cardEl);
+
+    if (opened.length === 2) {
+      locked = true;
+      setTimeout(checkMatch, 700);
+    }
+  }
+
+  function flipCard(cardEl, show) {
+    if (show) {
+      cardEl.classList.add('flipping');
+      setTimeout(() => {
+        cardEl.classList.add('is-open');
+        cardEl.classList.remove('flipping');
+        cardEl.classList.add('flipped');
+      }, 125);
+    } else {
+      cardEl.classList.add('flipping');
+      setTimeout(() => {
+        cardEl.classList.remove('is-open', 'flipped', 'wrong');
+        cardEl.classList.remove('flipping');
+      }, 125);
+    }
+  }
+
+  // ── Check match ──────────────────────────────────────
+  function checkMatch() {
+    const [a, b] = opened;
+    if (a.dataset.emoji === b.dataset.emoji) {
+      a.classList.add('matched');
+      b.classList.add('matched');
+      matchedCount++;
+      setStatus('✅ 매칭 성공!', 'good');
+      if (matchedCount === PAIRS.length) {
+        stopTimer();
+        setTimeout(showClear, 500);
+      }
+    } else {
+      a.classList.add('wrong');
+      b.classList.add('wrong');
+      setStatus('❌ 다시 도전!', 'bad');
+      setTimeout(() => {
+        flipCard(a, false);
+        flipCard(b, false);
+        setTimeout(() => setStatus('카드를 선택하세요'), 300);
+      }, 350);
+    }
+    opened = [];
+    locked = false;
+  }
+
+  // ── Timer ────────────────────────────────────────────
+  function startTimer() {
+    timeLeft = TOTAL_T;
+    updateTimerUI();
+    clearInterval(timerID);
+    timerID = setInterval(() => {
+      timeLeft--;
+      updateTimerUI();
+      if (timeLeft <= 0) {
+        clearInterval(timerID);
+        running = false;
+        locked  = true;
+        showTimeUp();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerID);
+    running = false;
+  }
+
+  function updateTimerUI() {
+    timerEl.textContent = timeLeft;
+    const pct = (timeLeft / TOTAL_T) * 100;
+    barEl.style.width = pct + '%';
+    const urgent = timeLeft <= 10;
+    timerEl.classList.toggle('urgent', urgent);
+    barEl.classList.toggle('urgent', urgent);
+  }
+
+  // ── Status ───────────────────────────────────────────
+  function setStatus(msg, cls = '') {
+    statusEl.textContent = msg;
+    statusEl.className = cls;
+  }
+
+  // ── Overlays ─────────────────────────────────────────
+  function showClear() {
+    oIcon.textContent  = '🎉';
+    oTitle.textContent = '모두 찾았어요!';
+    oSub.textContent   = `남은 시간 ${timeLeft}초 · 정말 훌륭해요!`;
+    overlay.classList.add('show');
+  }
+
+  function showTimeUp() {
+    oIcon.textContent  = '⏰';
+    oTitle.textContent = '시간 초과!';
+    oSub.textContent   = `${matchedCount}/${PAIRS.length} 쌍을 찾았어요. 다시 도전해 보세요!`;
+    overlay.classList.add('show');
+  }
+
+  function hideOverlay() {
+    overlay.classList.remove('show');
+  }
+
+  // ── Game start / reset ───────────────────────────────
+  function startGame() {
+    hideOverlay();
+    stopTimer();
+    buildBoard();
+    running = true;
+    locked  = false;
+    startTimer();
+    setStatus('카드를 선택하세요');
+    btnStart.textContent = '⏸ 진행 중';
+    btnStart.disabled = true;
+  }
+
+  function resetGame() {
+    hideOverlay();
+    stopTimer();
+    buildBoard();
+    running = false;
+    timeLeft = TOTAL_T;
+    updateTimerUI();
+    setStatus('▶ 시작 버튼을 눌러 게임을 시작하세요!');
+    btnStart.textContent = '▶ 시작';
+    btnStart.disabled = false;
+  }
+
+  // ── Score panel ──────────────────────────────────────
+  function buildScorePanel() {
+    teamRowsEl.innerHTML = '';
+    TEAM_DATA.forEach((t, i) => {
+      const row = document.createElement('div');
+      row.className = 'team-row';
+      row.innerHTML = `
+        <span class="team-badge" style="background:${t.color}20; font-size:1.1rem;">${t.emoji}</span>
+        <span class="team-label">${t.name}</span>
+        <span class="score-num" id="score-${i}">${scores[i]}</span>
+        <button class="score-btn score-minus" data-idx="${i}" title="1점 빼기">−</button>
+        <button class="score-btn score-plus"  data-idx="${i}" title="1점 추가">+</button>
+      `;
+      teamRowsEl.appendChild(row);
+    });
+
+    teamRowsEl.addEventListener('click', e => {
+      const btn = e.target.closest('.score-btn');
+      if (!btn) return;
+      const idx = +btn.dataset.idx;
+      if (btn.classList.contains('score-plus')) {
+        scores[idx] = Math.min(scores[idx] + 1, 99);
+      } else {
+        scores[idx] = Math.max(scores[idx] - 1, 0);
+      }
+      document.getElementById(`score-${idx}`).textContent = scores[idx];
+
+      // flash animation
+      const numEl = document.getElementById(`score-${idx}`);
+      numEl.style.transform = 'scale(1.4)';
+      numEl.style.color = btn.classList.contains('score-plus') ? '#4DD0A1' : '#FF7B6B';
+      setTimeout(() => {
+        numEl.style.transform = '';
+        numEl.style.color = '';
+      }, 250);
+    });
+  }
+
+  function resetScores() {
+    scores = Array(6).fill(0);
+    TEAM_DATA.forEach((_, i) => {
+      const el = document.getElementById(`score-${i}`);
+      if (el) el.textContent = 0;
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────
+  btnStart.addEventListener('click', startGame);
+  btnReset.addEventListener('click', resetGame);
+  oBtn.addEventListener('click', resetGame);
+  document.getElementById('btn-reset-score').addEventListener('click', () => {
+    if (confirm('점수를 모두 초기화할까요?')) resetScores();
+  });
+
+  // ── Init ─────────────────────────────────────────────
+  buildBoard();
+  buildScorePanel();
+  updateTimerUI();
+</script>
+</body>
+</html>
