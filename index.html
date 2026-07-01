@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>황금번호찾기</title>
+  <!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>황금번호찾기</title>
+<!-- 모바일 웹앱 설정 -->
+<meta name="theme-color" content="#7C3AED">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="황금번호찾기">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<!-- 파비콘 / 앱 아이콘 -->
+<link rel="icon" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+
+
+
+0
+이 게시물에는 댓글이 0개 있습니다
+
+
+
+  <!-- ===================== 신규 : 앱 아이콘(파비콘 / 홈 화면 아이콘) ===================== -->
+  <!-- 별도의 이미지 파일 없이도 동작하도록 base64 데이터로 아이콘을 직접 심어두었습니다. -->
+
+  <style>
+    /* ===================== 전체 기본 설정 ===================== */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* 모바일에서 터치시 파란 하이라이트 제거 */
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      /* 배경 : 푸른 바다 느낌의 그라데이션 */
+      background: linear-gradient(180deg, #012a4a 0%, #01497c 35%, #2a6f97 70%, #61a5c2 100%);
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* 전체를 가운데 정렬하는 container */
+    .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 30px 16px 60px;
+      text-align: center;
+    }
+
+    .title {
+      color: gold;
+      font-size: 28px;
+      margin: 10px 0 4px;
+      text-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+      letter-spacing: 1px;
+    }
+
+    .desc {
+      color: #eaf6ff;
+      font-size: 14px;
+      margin: 0 0 24px;
+      opacity: 0.9;
+    }
+
+    /* ===================== slot(number가 놓일 자리) 영역 ===================== */
+    .slotArea {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      max-width: 420px;
+      margin-bottom: 24px;
+    }
+
+    .slot {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 3px dashed rgba(255, 215, 0, 0.6);
+      background: rgba(255, 255, 255, 0.06);
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    /* slot에 token이 채워졌을 때 스타일 */
+    .slot.filled {
+      border-style: solid;
+      border-color: gold;
+      box-shadow: 0 0 18px 6px rgba(255, 215, 0, 0.7);
+    }
+
+    /* ===================== token(황금 구슬)을 놓는 트레이 영역 ===================== */
+    .trayArea {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 170px;
+      margin-bottom: 20px;
+      border: 2px dashed rgba(255, 255, 255, 0.25);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      overflow: hidden; /* 돼지 애니메이션이 영역 밖으로 튀어나가지 않도록 */
+    }
+
+    /* ---- 신규 : 트레이가 비어있을 때 나오는 춤추는 돼지 ---- */
+    .dancingPig {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 46px;
+      pointer-events: none; /* 돼지는 클릭/드래그 대상이 아님 */
+      user-select: none;
+      animation: pigDance 0.9s ease-in-out infinite;
+    }
+
+    @keyframes pigDance {
+      0%, 100% { transform: translate(-50%, -50%) rotate(-10deg) scaleY(1); }
+      25%      { transform: translate(-50%, -60%) rotate(0deg)   scaleY(1.08); }
+      50%      { transform: translate(-50%, -50%) rotate(10deg)  scaleY(1); }
+      75%      { transform: translate(-50%, -60%) rotate(0deg)   scaleY(1.08); }
+    }
+
+    /* 황금 token(공) 스타일 - 완전한 구 형태 + 금속 광택 표현 */
+    .token {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 17px;
+      color: #4a3600;
+      cursor: grab;
+      user-select: none;
+      touch-action: none; /* 드래그 중 화면 스크롤 방지 (모바일 필수) */
+      background: radial-gradient(circle at 30% 28%, #fff6d0 0%, #ffe066 22%, #ffd700 50%, #c99700 78%, #8a6d1f 100%);
+      box-shadow:
+        inset -4px -4px 8px rgba(0, 0, 0, 0.35),
+        inset 3px 3px 6px rgba(255, 255, 255, 0.6),
+        0 4px 10px rgba(0, 0, 0, 0.45);
+      transition: box-shadow 0.25s ease;
+      z-index: 5;
+    }
+
+    .token.dragging {
+      cursor: grabbing;
+      box-shadow:
+        inset -4px -4px 8px rgba(0, 0, 0, 0.35),
+        0 0 20px 6px rgba(255, 255, 255, 0.6);
+    }
+
+    /* slot에 정확히 스냅되어 완료되었을 때 빛나는 효과 */
+    .token.glow {
+      cursor: grab; /* 다시 잡아서 뺄 수 있으므로 grab 유지 */
+      box-shadow:
+        0 0 10px 3px rgba(255, 255, 255, 0.8),
+        0 0 26px 10px gold;
+      animation: shine 1.4s ease-in-out infinite alternate;
+    }
+
+    @keyframes shine {
+      from { filter: brightness(1); }
+      to   { filter: brightness(1.25); }
+    }
+
+    /* ---- 신규 : 슬롯에서 토큰이 빠져나갈 때 터지는 불꽃 파티클 ---- */
+    .fireworkParticle {
+      position: fixed;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 3000;
+      animation: fireworkFly 0.7s ease-out forwards;
+    }
+
+    @keyframes fireworkFly {
+      0%   { transform: translate(0, 0) scale(1);   opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+    }
+
+    /* ===================== 황금색 버튼 (골드바 모양) ===================== */
+    .goldButton {
+      width: min(280px, 80vw);
+      height: 68px;
+      border: none;
+      border-radius: 10px;
+      font-size: 19px;
+      font-weight: bold;
+      color: #3b2a00;
+      letter-spacing: 1px;
+      cursor: pointer;
+      background: linear-gradient(180deg, #fff2b0 0%, #ffd700 45%, #d4af37 75%, #9c7a1f 100%);
+      box-shadow:
+        0 6px 0 #7a5c00,
+        0 10px 18px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .goldButton:active {
+      transform: translateY(5px);
+      box-shadow:
+        0 1px 0 #7a5c00,
+        0 4px 10px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+
+    /* ---- 신규 : 저장 기록 보기 버튼 (보조 버튼, 골드 테두리 스타일) ---- */
+    .historyButton {
+      margin-top: 14px;
+      width: min(280px, 80vw);
+      height: 52px;
+      border: 2px solid gold;
+      border-radius: 10px;
+      background: rgba(255, 215, 0, 0.08);
+      color: gold;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.08s ease;
+    }
+
+    .historyButton:active {
+      transform: translateY(3px);
+      background: rgba(255, 215, 0, 0.2);
+    }
+
+    .completeMsg {
+      color: gold;
+      font-size: 17px;
+      font-weight: bold;
+      margin-top: 20px;
+      min-height: 24px;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
+    }
+
+    /* ===================== 신규 : 저장 기록 모달 ===================== */
+    .modalOverlay {
+      display: none; /* 기본은 숨김, JS로 flex 전환 */
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 4000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modalBox {
+      width: min(420px, 100%);
+      max-height: 80vh;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #013a63, #01497c);
+      border: 2px solid gold;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+    }
+
+    .modalTitle {
+      color: gold;
+      font-size: 18px;
+      margin: 0 0 14px;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+    }
+
+    .historyList {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .historyItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #eaf6ff;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .historyIndex {
+      color: gold;
+      font-weight: bold;
+      min-width: 20px;
+    }
+
+    .historyNumbers {
+      flex: 1;
+      font-weight: bold;
+      color: #fff2b0;
+      letter-spacing: 0.5px;
+    }
+
+    .historyDate {
+      font-size: 11px;
+      color: #b9d7e8;
+      white-space: nowrap;
+    }
+
+    .emptyHistoryMsg {
+      color: #cfe8f5;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .modalBtnRow {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modalBtn {
+      flex: 1;
+      height: 44px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .clearBtnStyle {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffdede;
+      border: 1px solid rgba(255, 100, 100, 0.5);
+    }
+
+    .closeBtnStyle {
+      background: linear-gradient(180deg, #ffe98a, #d4af37);
+      color: #3b2a00;
+    }
+  </style>
+</head>
+<body>
+<!-- 제목 구간 -->
+  <div class="container">
+    <h1 class="title">🌊 황금번호찾기 🌟</h1>
+    <p class="desc">버튼을 눌러 번호를 뽑고, 황금 토큰을 슬롯으로 드래그해 보세요!</p>
+
+    <!-- 번호가 채워질 6개의 slot이 JS로 이 안에 생성됩니다 -->
+    <div class="slotArea" id="slotArea"></div>
+
+    <!-- 드래그할 황금 token들이 이 안에 생성됩니다. 비어있을 때는 돼지가 춤을 춥니다 -->
+    <div class="trayArea" id="trayArea">
+      <div class="dancingPig" id="dancingPig">🐷</div>
+    </div>
+
+    <button class="goldButton" id="extractBtn">황금번호 추출</button>
+
+    <!-- 신규 : 저장된 조합(최대 10개) 확인 버튼 -->
+    <button class="historyButton" id="historyBtn">📜 저장 기록 보기</button>
+
+    <p class="completeMsg" id="completeMsg"></p>
+  </div>
+
+  <!-- 신규 : 저장 기록을 보여주는 모달 창 -->
+  <div class="modalOverlay" id="modalOverlay">
+    <div class="modalBox">
+      <h2 class="modalTitle">저장된 황금번호 기록 (최대 10개)</h2>
+      <div class="historyList" id="historyList"></div>
+      <div class="modalBtnRow">
+        <button class="modalBtn clearBtnStyle" id="clearHistoryBtn">기록 초기화</button>
+        <button class="modalBtn closeBtnStyle" id="closeModalBtn">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================
+    // 황금번호찾기 - 클라이언트(프론트엔드) 스크립트
+    // 모든 변수/함수명은 하이픈 없는 카멜케이스로 통일했습니다.
+    // =========================================================
+
+    // ---------- 기본 설정값 ----------
+    const MIN_NUM = 1;
+    const MAX_NUM = 45;
+    const EXTRACT_COUNT = 6;
+    const SNAP_DIST_STANDARD = 55; // 이 거리(px) 안으로 들어오면 slot에 자동으로 붙습니다
+    const HISTORY_KEY = 'goldNumberHistory'; // 저장 기록을 담아둘 localStorage 키 이름
+    const MAX_HISTORY_COUNT = 10; // 최대 저장 개수
+
+    // ---------- 화면 element 가져오기 ----------
+    const slotArea = document.getElementById('slotArea');
+    const trayArea = document.getElementById('trayArea');
+    const dancingPig = document.getElementById('dancingPig');
+    const extractBtn = document.getElementById('extractBtn');
+    const completeMsg = document.getElementById('completeMsg');
+    const historyBtn = document.getElementById('historyBtn');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const historyList = document.getElementById('historyList');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    // slot 정보를 담아둘 배열 (element, filled 여부)
+    let slotList = [];
+    let filledSlotCount = 0;
+    let currentExtractedNumbers = []; // 이번 회차에 뽑힌 번호 (기록 저장용)
+
+    // ---------- 1) slot 6개를 화면에 생성하는 함수 ----------
+    function createSlots() {
+      slotArea.innerHTML = '';
+      slotList = [];
+      for (let i = 0; i < EXTRACT_COUNT; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slotArea.appendChild(slot);
+        slotList.push({ element: slot, filled: false });
+      }
+    }
+    createSlots(); // 페이지 로드시 바로 slot 6개 만들기
+
+    // ---------- 2) 1~45 중 중복없이 6개 뽑아 오름차순 정렬 ----------
+    function extractRandomNumbers() {
+      const numberSet = new Set();
+      while (numberSet.size < EXTRACT_COUNT) {
+        const number = Math.floor(Math.random() * (MAX_NUM - MIN_NUM + 1)) + MIN_NUM;
+        numberSet.add(number);
+      }
+      return Array.from(numberSet).sort((a, b) => a - b);
+    }
+
+    // ---------- 3) 짧은 효과음 재생 (Web Audio API) ----------
+    function playSfx(frequency) {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const volumeControl = audioContext.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+        volumeControl.gain.setValueAtTime(0.25, audioContext.currentTime);
+        volumeControl.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
+
+        oscillator.connect(volumeControl).connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.35);
+      } catch (error) {
+        console.log('sfx-error:', error);
+      }
+    }
+
+    // ---------- 4) 진동 피드백 (지원하는 기기에서만 동작) ----------
+    function vibrationFeedback() {
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }
+
+    // ---------- 5) 신규 : 슬롯에서 토큰이 빠져나갈 때 터지는 불꽃 애니메이션 ----------
+    function triggerFirework(x, y) {
+      const colorList = ['#ffd700', '#ff8c00', '#ff4500', '#fff176', '#ffee58'];
+      const particleCount = 14;
+
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'fireworkParticle';
+
+        // 원형으로 골고루 퍼지도록 각도를 계산
+        const angle = (Math.PI * 2 * i) / particleCount + Math.random() * 0.3;
+        const distance = 40 + Math.random() * 40;
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+
+        particle.style.setProperty('--dx', dx + 'px');
+        particle.style.setProperty('--dy', dy + 'px');
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.background = colorList[Math.floor(Math.random() * colorList.length)];
+
+        document.body.appendChild(particle);
+        // 애니메이션이 끝나면 파티클 요소를 화면에서 완전히 제거 (메모리 정리)
+        setTimeout(() => particle.remove(), 750);
+      }
+
+      playSfx(700); // 불꽃 터지는 느낌의 짧은 효과음
+    }
+
+    // ---------- 6) 신규 : 트레이가 비었는지 확인해서 춤추는 돼지 보여주기/숨기기 ----------
+    function updatePigVisibility() {
+      // 아직 슬롯에 배치되지 않은(= glow 클래스가 없는) 토큰 개수를 셉니다.
+      const remainingTokenCount = trayArea.querySelectorAll('.token:not(.glow)').length;
+      dancingPig.style.display = remainingTokenCount === 0 ? 'block' : 'none';
+    }
+    updatePigVisibility(); // 페이지 로드 시점에는 토큰이 없으므로 돼지가 바로 보입니다
+
+    // ---------- 7) 뽑힌 number로 token(황금 구슬) 생성해서 트레이에 배치 ----------
+    function createTokens(extractedNumberList) {
+      // 돼지는 그대로 두고, 기존 토큰들만 제거합니다.
+      trayArea.querySelectorAll('.token').forEach(el => el.remove());
+      completeMsg.textContent = '';
+      filledSlotCount = 0;
+
+      // slot들도 다시 빈 상태로 초기화
+      slotList.forEach(slotInfo => {
+        slotInfo.filled = false;
+        slotInfo.element.classList.remove('filled');
+      });
+
+      extractedNumberList.forEach((number, i) => {
+        const token = document.createElement('div');
+        token.className = 'token';
+        token.textContent = number;
+        token.style.position = 'absolute';
+        token.assignedSlot = null; // 이 토큰이 현재 어떤 슬롯에 들어가 있는지 기억하는 값
+
+        // token들이 서로 겹치지 않도록 트레이 안에 격자 형태로 배치
+        const startX = 15 + (i % 3) * 95;
+        const startY = 10 + Math.floor(i / 3) * 80;
+        token.style.left = startX + 'px';
+        token.style.top = startY + 'px';
+
+        trayArea.appendChild(token);
+        connectDrag(token); // 이 token에 드래그 event 연결
+      });
+
+      updatePigVisibility(); // 토큰이 생겼으니 돼지는 숨김 처리
+    }
+
+    // ---------- 8) token에 드래그(터치+mouse 통합) 기능 연결 ----------
+    function connectDrag(token) {
+      let offsetX = 0;
+      let offsetY = 0;
+      let isDragging = false;
+
+      // 터치 → 손가락(또는 mouse)을 누른 순간
+      token.addEventListener('pointerdown', (event) => {
+        isDragging = true;
+        token.setPointerCapture(event.pointerId);
+        token.classList.add('dragging');
+
+        // 신규 : 이미 슬롯에 꽂혀서 빛나던 토큰을 다시 뽑아내는 경우
+        if (token.classList.contains('glow')) {
+          token.classList.remove('glow');
+
+          if (token.assignedSlot) {
+            token.assignedSlot.filled = false;
+            token.assignedSlot.element.classList.remove('filled');
+            token.assignedSlot = null;
+          }
+
+          const rect = token.getBoundingClientRect();
+          triggerFirework(rect.left + rect.width / 2, rect.top + rect.height / 2); // 불꽃 애니메이션 발생
+
+          filledSlotCount = Math.max(0, filledSlotCount - 1);
+          completeMsg.textContent = ''; // 완성 문구가 떠 있었다면 취소
+          updatePigVisibility();
+        }
+
+        const rect = token.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+
+        // 드래그하는 동안은 화면(뷰포트) 기준 고정 좌표로 이동시킵니다.
+        token.style.position = 'fixed';
+        token.style.zIndex = 1000;
+      });
+
+      // 드래그 → 손가락(또는 mouse)이 움직이는 중
+      token.addEventListener('pointermove', (event) => {
+        if (!isDragging) return;
+        token.style.left = (event.clientX - offsetX) + 'px';
+        token.style.top = (event.clientY - offsetY) + 'px';
+      });
+
+      // slot 흡착 → 손가락(또는 mouse)을 뗀 순간
+      token.addEventListener('pointerup', (event) => {
+        if (!isDragging) return;
+        isDragging = false;
+        token.classList.remove('dragging');
+        snapToSlot(token, event.clientX, event.clientY);
+      });
+    }
+
+    // ---------- 9) 가장 가까운 빈 slot을 찾아 자동으로 스냅시키는 함수 ----------
+    function snapToSlot(token, mouseX, mouseY) {
+      let closestSlot = null;
+      let minDist = Infinity;
+
+      // 비어있는 slot 중에서 손을 뗀 지점과 가장 가까운 slot 찾기
+      slotList.forEach(slotInfo => {
+        if (slotInfo.filled) return;
+        const rect = slotInfo.element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dist = Math.hypot(mouseX - centerX, mouseY - centerY);
+        if (dist < minDist) {
+          minDist = dist;
+          closestSlot = slotInfo;
+        }
+      });
+
+      // 기준 거리 안에 slot이 있으면 → 흡착(스냅) + 효과음 + 진동 + 상태 저장
+      if (closestSlot && minDist <= SNAP_DIST_STANDARD) {
+        const rect = closestSlot.element.getBoundingClientRect();
+        token.style.left = (rect.left + rect.width / 2 - token.offsetWidth / 2) + 'px';
+        token.style.top = (rect.top + rect.height / 2 - token.offsetHeight / 2) + 'px';
+
+        token.classList.add('glow'); // 선택 완료 → 아이콘이 glow
+        token.assignedSlot = closestSlot; // 나중에 다시 뺄 때를 대비해 슬롯을 기억해둠
+        closestSlot.filled = true;
+        closestSlot.element.classList.add('filled');
+
+        vibrationFeedback(); // 이동 시 진동 피드백
+        playSfx(1046);       // 흡착 효과음
+
+        filledSlotCount++;
+        updatePigVisibility(); // 모든 토큰이 슬롯에 들어가면 돼지가 다시 등장
+
+        if (filledSlotCount === EXTRACT_COUNT) {
+          completeMsg.textContent = '🎉 황금번호 완성! 행운을 빕니다 🎉';
+          playSfx(1568); // 전체 완료 축하 효과음
+          addToHistory(currentExtractedNumbers); // 신규 : 완성된 조합을 자동으로 저장
+        }
+      } else {
+        // slot 근처가 아니면 트레이 영역 안쪽 임의 위치로 되돌립니다.
+        token.style.position = 'absolute';
+        token.style.left = (Math.random() * 250 + 10) + 'px';
+        token.style.top = (Math.random() * 90 + 10) + 'px';
+        token.style.zIndex = 5;
+      }
+    }
+
+    // ---------- 10) 신규 : 저장 기록 관련 함수들 (localStorage 사용, 최대 10개 유지) ----------
+
+    // 저장된 기록 배열을 불러오는 함수
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (error) {
+        console.log('기록 불러오기 실패:', error);
+        return [];
+      }
+    }
+
+    // 기록 배열을 저장하는 함수
+    function saveHistoryList(historyArray) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(historyArray));
+    }
+
+    // 새 조합을 기록 맨 앞에 추가하고, 10개를 넘으면 오래된 것부터 삭제
+    function addToHistory(numbers) {
+      const history = loadHistory();
+      const newRecord = {
+        numbers: numbers,
+        date: new Date().toLocaleString('ko-KR')
+      };
+      history.unshift(newRecord); // 최신 기록을 맨 앞에 추가
+
+      if (history.length > MAX_HISTORY_COUNT) {
+        history.length = MAX_HISTORY_COUNT; // 10개까지만 남기고 나머지(오래된 것) 삭제
+      }
+      saveHistoryList(history);
+    }
+
+    // 기록 목록을 모달 화면에 그려주는 함수
+    function renderHistory() {
+      const history = loadHistory();
+      historyList.innerHTML = '';
+
+      if (history.length === 0) {
+        historyList.innerHTML = '<p class="emptyHistoryMsg">아직 저장된 조합이 없습니다. 번호를 완성해보세요!</p>';
+        return;
+      }
+
+      history.forEach((record, index) => {
+        const row = document.createElement('div');
+        row.className = 'historyItem';
+        row.innerHTML =
+          '<span class="historyIndex">' + (index + 1) + '</span>' +
+          '<span class="historyNumbers">' + record.numbers.join(', ') + '</span>' +
+          '<span class="historyDate">' + record.date + '</span>';
+        historyList.appendChild(row);
+      });
+    }
+
+    // ---------- 11) 버튼 이벤트 연결 ----------
+
+    // 황금번호 추출 버튼
+    extractBtn.addEventListener('click', () => {
+      currentExtractedNumbers = extractRandomNumbers();
+      createTokens(currentExtractedNumbers);
+      extractBtn.textContent = '다시 뽑기';
+    });
+
+    // 저장 기록 보기 버튼 → 모달 열기
+    historyBtn.addEventListener('click', () => {
+      renderHistory();
+      modalOverlay.style.display = 'flex';
+    });
+
+    // 모달 닫기 버튼
+    closeModalBtn.addEventListener('click', () => {
+      modalOverlay.style.display = 'none';
+    });
+
+    // 모달 바깥의 어두운 배경을 클릭해도 닫히도록 처리
+    modalOverlay.addEventListener('click', (event) => {
+      if (event.target === modalOverlay) {
+        modalOverlay.style.display = 'none';
+      }
+    });
+
+    // 기록 초기화 버튼
+    clearHistoryBtn.addEventListener('click', () => {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+    });
+  </script>
+</body>
+</html>
+  <style>
+    /* ===================== 전체 기본 설정 ===================== */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* 모바일에서 터치시 파란 하이라이트 제거 */
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      /* 배경 : 푸른 바다 느낌의 그라데이션 */
+      background: linear-gradient(180deg, #012a4a 0%, #01497c 35%, #2a6f97 70%, #61a5c2 100%);
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* 전체를 가운데 정렬하는 container */
+    .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 30px 16px 60px;
+      text-align: center;
+    }
+
+    .title {
+      color: gold;
+      font-size: 28px;
+      margin: 10px 0 4px;
+      text-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+      letter-spacing: 1px;
+    }
+
+    .desc {
+      color: #eaf6ff;
+      font-size: 14px;
+      margin: 0 0 24px;
+      opacity: 0.9;
+    }
+
+    /* ===================== slot(number가 놓일 자리) 영역 ===================== */
+    .slotArea {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      max-width: 420px;
+      margin-bottom: 24px;
+    }
+
+    .slot {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 3px dashed rgba(255, 215, 0, 0.6);
+      background: rgba(255, 255, 255, 0.06);
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    /* slot에 token이 채워졌을 때 스타일 */
+    .slot.filled {
+      border-style: solid;
+      border-color: gold;
+      box-shadow: 0 0 18px 6px rgba(255, 215, 0, 0.7);
+    }
+
+    /* ===================== token(황금 구슬)을 놓는 트레이 영역 ===================== */
+    .trayArea {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 170px;
+      margin-bottom: 20px;
+      border: 2px dashed rgba(255, 255, 255, 0.25);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      overflow: hidden; /* 돼지 애니메이션이 영역 밖으로 튀어나가지 않도록 */
+    }
+
+    /* ---- 신규 : 트레이가 비어있을 때 나오는 춤추는 돼지 ---- */
+    .dancingPig {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 46px;
+      pointer-events: none; /* 돼지는 클릭/드래그 대상이 아님 */
+      user-select: none;
+      animation: pigDance 0.9s ease-in-out infinite;
+    }
+
+    @keyframes pigDance {
+      0%, 100% { transform: translate(-50%, -50%) rotate(-10deg) scaleY(1); }
+      25%      { transform: translate(-50%, -60%) rotate(0deg)   scaleY(1.08); }
+      50%      { transform: translate(-50%, -50%) rotate(10deg)  scaleY(1); }
+      75%      { transform: translate(-50%, -60%) rotate(0deg)   scaleY(1.08); }
+    }
+
+    /* 황금 token(공) 스타일 - 완전한 구 형태 + 금속 광택 표현 */
+    .token {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 17px;
+      color: #4a3600;
+      cursor: grab;
+      user-select: none;
+      touch-action: none; /* 드래그 중 화면 스크롤 방지 (모바일 필수) */
+      background: radial-gradient(circle at 30% 28%, #fff6d0 0%, #ffe066 22%, #ffd700 50%, #c99700 78%, #8a6d1f 100%);
+      box-shadow:
+        inset -4px -4px 8px rgba(0, 0, 0, 0.35),
+        inset 3px 3px 6px rgba(255, 255, 255, 0.6),
+        0 4px 10px rgba(0, 0, 0, 0.45);
+      transition: box-shadow 0.25s ease;
+      z-index: 5;
+    }
+
+    .token.dragging {
+      cursor: grabbing;
+      box-shadow:
+        inset -4px -4px 8px rgba(0, 0, 0, 0.35),
+        0 0 20px 6px rgba(255, 255, 255, 0.6);
+    }
+
+    /* slot에 정확히 스냅되어 완료되었을 때 빛나는 효과 */
+    .token.glow {
+      cursor: grab; /* 다시 잡아서 뺄 수 있으므로 grab 유지 */
+      box-shadow:
+        0 0 10px 3px rgba(255, 255, 255, 0.8),
+        0 0 26px 10px gold;
+      animation: shine 1.4s ease-in-out infinite alternate;
+    }
+
+    @keyframes shine {
+      from { filter: brightness(1); }
+      to   { filter: brightness(1.25); }
+    }
+
+    /* ---- 신규 : 슬롯에서 토큰이 빠져나갈 때 터지는 불꽃 파티클 ---- */
+    .fireworkParticle {
+      position: fixed;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 3000;
+      animation: fireworkFly 0.7s ease-out forwards;
+    }
+
+    @keyframes fireworkFly {
+      0%   { transform: translate(0, 0) scale(1);   opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+    }
+
+    /* ===================== 황금색 버튼 (골드바 모양) ===================== */
+    .goldButton {
+      width: min(280px, 80vw);
+      height: 68px;
+      border: none;
+      border-radius: 10px;
+      font-size: 19px;
+      font-weight: bold;
+      color: #3b2a00;
+      letter-spacing: 1px;
+      cursor: pointer;
+      background: linear-gradient(180deg, #fff2b0 0%, #ffd700 45%, #d4af37 75%, #9c7a1f 100%);
+      box-shadow:
+        0 6px 0 #7a5c00,
+        0 10px 18px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .goldButton:active {
+      transform: translateY(5px);
+      box-shadow:
+        0 1px 0 #7a5c00,
+        0 4px 10px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+
+    /* ---- 신규 : 저장 기록 보기 버튼 (보조 버튼, 골드 테두리 스타일) ---- */
+    .historyButton {
+      margin-top: 14px;
+      width: min(280px, 80vw);
+      height: 52px;
+      border: 2px solid gold;
+      border-radius: 10px;
+      background: rgba(255, 215, 0, 0.08);
+      color: gold;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.08s ease;
+    }
+
+    .historyButton:active {
+      transform: translateY(3px);
+      background: rgba(255, 215, 0, 0.2);
+    }
+
+    .completeMsg {
+      color: gold;
+      font-size: 17px;
+      font-weight: bold;
+      margin-top: 20px;
+      min-height: 24px;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
+    }
+
+    /* ===================== 신규 : 저장 기록 모달 ===================== */
+    .modalOverlay {
+      display: none; /* 기본은 숨김, JS로 flex 전환 */
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 4000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modalBox {
+      width: min(420px, 100%);
+      max-height: 80vh;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #013a63, #01497c);
+      border: 2px solid gold;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+    }
+
+    .modalTitle {
+      color: gold;
+      font-size: 18px;
+      margin: 0 0 14px;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+    }
+
+    .historyList {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .historyItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #eaf6ff;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .historyIndex {
+      color: gold;
+      font-weight: bold;
+      min-width: 20px;
+    }
+
+    .historyNumbers {
+      flex: 1;
+      font-weight: bold;
+      color: #fff2b0;
+      letter-spacing: 0.5px;
+    }
+
+    .historyDate {
+      font-size: 11px;
+      color: #b9d7e8;
+      white-space: nowrap;
+    }
+
+    .emptyHistoryMsg {
+      color: #cfe8f5;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .modalBtnRow {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modalBtn {
+      flex: 1;
+      height: 44px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .clearBtnStyle {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffdede;
+      border: 1px solid rgba(255, 100, 100, 0.5);
+    }
+
+    .closeBtnStyle {
+      background: linear-gradient(180deg, #ffe98a, #d4af37);
+      color: #3b2a00;
+    }
+  </style>
+</head>
+<body>
+<!-- 제목 구간 -->
+  <div class="container">
+    <h1 class="title">🌊 황금번호찾기 🌟</h1>
+    <p class="desc">버튼을 눌러 번호를 뽑고, 황금 토큰을 슬롯으로 드래그해 보세요!</p>
+
+    <!-- 번호가 채워질 6개의 slot이 JS로 이 안에 생성됩니다 -->
+    <div class="slotArea" id="slotArea"></div>
+
+    <!-- 드래그할 황금 token들이 이 안에 생성됩니다. 비어있을 때는 돼지가 춤을 춥니다 -->
+    <div class="trayArea" id="trayArea">
+      <div class="dancingPig" id="dancingPig">🐷</div>
+    </div>
+
+    <button class="goldButton" id="extractBtn">황금번호 추출</button>
+
+    <!-- 신규 : 저장된 조합(최대 10개) 확인 버튼 -->
+    <button class="historyButton" id="historyBtn">📜 저장 기록 보기</button>
+
+    <p class="completeMsg" id="completeMsg"></p>
+  </div>
+
+  <!-- 신규 : 저장 기록을 보여주는 모달 창 -->
+  <div class="modalOverlay" id="modalOverlay">
+    <div class="modalBox">
+      <h2 class="modalTitle">저장된 황금번호 기록 (최대 10개)</h2>
+      <div class="historyList" id="historyList"></div>
+      <div class="modalBtnRow">
+        <button class="modalBtn clearBtnStyle" id="clearHistoryBtn">기록 초기화</button>
+        <button class="modalBtn closeBtnStyle" id="closeModalBtn">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================
+    // 황금번호찾기 - 클라이언트(프론트엔드) 스크립트
+    // 모든 변수/함수명은 하이픈 없는 카멜케이스로 통일했습니다.
+    // =========================================================
+
+    // ---------- 기본 설정값 ----------
+    const MIN_NUM = 1;
+    const MAX_NUM = 45;
+    const EXTRACT_COUNT = 6;
+    const SNAP_DIST_STANDARD = 55; // 이 거리(px) 안으로 들어오면 slot에 자동으로 붙습니다
+    const HISTORY_KEY = 'goldNumberHistory'; // 저장 기록을 담아둘 localStorage 키 이름
+    const MAX_HISTORY_COUNT = 10; // 최대 저장 개수
+
+    // ---------- 화면 element 가져오기 ----------
+    const slotArea = document.getElementById('slotArea');
+    const trayArea = document.getElementById('trayArea');
+    const dancingPig = document.getElementById('dancingPig');
+    const extractBtn = document.getElementById('extractBtn');
+    const completeMsg = document.getElementById('completeMsg');
+    const historyBtn = document.getElementById('historyBtn');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const historyList = document.getElementById('historyList');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    // slot 정보를 담아둘 배열 (element, filled 여부)
+    let slotList = [];
+    let filledSlotCount = 0;
+    let currentExtractedNumbers = []; // 이번 회차에 뽑힌 번호 (기록 저장용)
+
+    // ---------- 1) slot 6개를 화면에 생성하는 함수 ----------
+    function createSlots() {
+      slotArea.innerHTML = '';
+      slotList = [];
+      for (let i = 0; i < EXTRACT_COUNT; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slotArea.appendChild(slot);
+        slotList.push({ element: slot, filled: false });
+      }
+    }
+    createSlots(); // 페이지 로드시 바로 slot 6개 만들기
+
+    // ---------- 2) 1~45 중 중복없이 6개 뽑아 오름차순 정렬 ----------
+    function extractRandomNumbers() {
+      const numberSet = new Set();
+      while (numberSet.size < EXTRACT_COUNT) {
+        const number = Math.floor(Math.random() * (MAX_NUM - MIN_NUM + 1)) + MIN_NUM;
+        numberSet.add(number);
+      }
+      return Array.from(numberSet).sort((a, b) => a - b);
+    }
+
+    // ---------- 3) 짧은 효과음 재생 (Web Audio API) ----------
+    function playSfx(frequency) {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const volumeControl = audioContext.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+        volumeControl.gain.setValueAtTime(0.25, audioContext.currentTime);
+        volumeControl.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
+
+        oscillator.connect(volumeControl).connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.35);
+      } catch (error) {
+        console.log('sfx-error:', error);
+      }
+    }
+
+    // ---------- 4) 진동 피드백 (지원하는 기기에서만 동작) ----------
+    function vibrationFeedback() {
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }
+
+    // ---------- 5) 신규 : 슬롯에서 토큰이 빠져나갈 때 터지는 불꽃 애니메이션 ----------
+    function triggerFirework(x, y) {
+      const colorList = ['#ffd700', '#ff8c00', '#ff4500', '#fff176', '#ffee58'];
+      const particleCount = 14;
+
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'fireworkParticle';
+
+        // 원형으로 골고루 퍼지도록 각도를 계산
+        const angle = (Math.PI * 2 * i) / particleCount + Math.random() * 0.3;
+        const distance = 40 + Math.random() * 40;
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+
+        particle.style.setProperty('--dx', dx + 'px');
+        particle.style.setProperty('--dy', dy + 'px');
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.background = colorList[Math.floor(Math.random() * colorList.length)];
+
+        document.body.appendChild(particle);
+        // 애니메이션이 끝나면 파티클 요소를 화면에서 완전히 제거 (메모리 정리)
+        setTimeout(() => particle.remove(), 750);
+      }
+
+      playSfx(700); // 불꽃 터지는 느낌의 짧은 효과음
+    }
+
+    // ---------- 6) 신규 : 트레이가 비었는지 확인해서 춤추는 돼지 보여주기/숨기기 ----------
+    function updatePigVisibility() {
+      // 아직 슬롯에 배치되지 않은(= glow 클래스가 없는) 토큰 개수를 셉니다.
+      const remainingTokenCount = trayArea.querySelectorAll('.token:not(.glow)').length;
+      dancingPig.style.display = remainingTokenCount === 0 ? 'block' : 'none';
+    }
+    updatePigVisibility(); // 페이지 로드 시점에는 토큰이 없으므로 돼지가 바로 보입니다
+
+    // ---------- 7) 뽑힌 number로 token(황금 구슬) 생성해서 트레이에 배치 ----------
+    function createTokens(extractedNumberList) {
+      // 돼지는 그대로 두고, 기존 토큰들만 제거합니다.
+      trayArea.querySelectorAll('.token').forEach(el => el.remove());
+      completeMsg.textContent = '';
+      filledSlotCount = 0;
+
+      // slot들도 다시 빈 상태로 초기화
+      slotList.forEach(slotInfo => {
+        slotInfo.filled = false;
+        slotInfo.element.classList.remove('filled');
+      });
+
+      extractedNumberList.forEach((number, i) => {
+        const token = document.createElement('div');
+        token.className = 'token';
+        token.textContent = number;
+        token.style.position = 'absolute';
+        token.assignedSlot = null; // 이 토큰이 현재 어떤 슬롯에 들어가 있는지 기억하는 값
+
+        // token들이 서로 겹치지 않도록 트레이 안에 격자 형태로 배치
+        const startX = 15 + (i % 3) * 95;
+        const startY = 10 + Math.floor(i / 3) * 80;
+        token.style.left = startX + 'px';
+        token.style.top = startY + 'px';
+
+        trayArea.appendChild(token);
+        connectDrag(token); // 이 token에 드래그 event 연결
+      });
+
+      updatePigVisibility(); // 토큰이 생겼으니 돼지는 숨김 처리
+    }
+
+    // ---------- 8) token에 드래그(터치+mouse 통합) 기능 연결 ----------
+    function connectDrag(token) {
+      let offsetX = 0;
+      let offsetY = 0;
+      let isDragging = false;
+
+      // 터치 → 손가락(또는 mouse)을 누른 순간
+      token.addEventListener('pointerdown', (event) => {
+        isDragging = true;
+        token.setPointerCapture(event.pointerId);
+        token.classList.add('dragging');
+
+        // 신규 : 이미 슬롯에 꽂혀서 빛나던 토큰을 다시 뽑아내는 경우
+        if (token.classList.contains('glow')) {
+          token.classList.remove('glow');
+
+          if (token.assignedSlot) {
+            token.assignedSlot.filled = false;
+            token.assignedSlot.element.classList.remove('filled');
+            token.assignedSlot = null;
+          }
+
+          const rect = token.getBoundingClientRect();
+          triggerFirework(rect.left + rect.width / 2, rect.top + rect.height / 2); // 불꽃 애니메이션 발생
+
+          filledSlotCount = Math.max(0, filledSlotCount - 1);
+          completeMsg.textContent = ''; // 완성 문구가 떠 있었다면 취소
+          updatePigVisibility();
+        }
+
+        const rect = token.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+
+        // 드래그하는 동안은 화면(뷰포트) 기준 고정 좌표로 이동시킵니다.
+        token.style.position = 'fixed';
+        token.style.zIndex = 1000;
+      });
+
+      // 드래그 → 손가락(또는 mouse)이 움직이는 중
+      token.addEventListener('pointermove', (event) => {
+        if (!isDragging) return;
+        token.style.left = (event.clientX - offsetX) + 'px';
+        token.style.top = (event.clientY - offsetY) + 'px';
+      });
+
+      // slot 흡착 → 손가락(또는 mouse)을 뗀 순간
+      token.addEventListener('pointerup', (event) => {
+        if (!isDragging) return;
+        isDragging = false;
+        token.classList.remove('dragging');
+        snapToSlot(token, event.clientX, event.clientY);
+      });
+    }
+
+    // ---------- 9) 가장 가까운 빈 slot을 찾아 자동으로 스냅시키는 함수 ----------
+    function snapToSlot(token, mouseX, mouseY) {
+      let closestSlot = null;
+      let minDist = Infinity;
+
+      // 비어있는 slot 중에서 손을 뗀 지점과 가장 가까운 slot 찾기
+      slotList.forEach(slotInfo => {
+        if (slotInfo.filled) return;
+        const rect = slotInfo.element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dist = Math.hypot(mouseX - centerX, mouseY - centerY);
+        if (dist < minDist) {
+          minDist = dist;
+          closestSlot = slotInfo;
+        }
+      });
+
+      // 기준 거리 안에 slot이 있으면 → 흡착(스냅) + 효과음 + 진동 + 상태 저장
+      if (closestSlot && minDist <= SNAP_DIST_STANDARD) {
+        const rect = closestSlot.element.getBoundingClientRect();
+        token.style.left = (rect.left + rect.width / 2 - token.offsetWidth / 2) + 'px';
+        token.style.top = (rect.top + rect.height / 2 - token.offsetHeight / 2) + 'px';
+
+        token.classList.add('glow'); // 선택 완료 → 아이콘이 glow
+        token.assignedSlot = closestSlot; // 나중에 다시 뺄 때를 대비해 슬롯을 기억해둠
+        closestSlot.filled = true;
+        closestSlot.element.classList.add('filled');
+
+        vibrationFeedback(); // 이동 시 진동 피드백
+        playSfx(1046);       // 흡착 효과음
+
+        filledSlotCount++;
+        updatePigVisibility(); // 모든 토큰이 슬롯에 들어가면 돼지가 다시 등장
+
+        if (filledSlotCount === EXTRACT_COUNT) {
+          completeMsg.textContent = '🎉 황금번호 완성! 행운을 빕니다 🎉';
+          playSfx(1568); // 전체 완료 축하 효과음
+          addToHistory(currentExtractedNumbers); // 신규 : 완성된 조합을 자동으로 저장
+        }
+      } else {
+        // slot 근처가 아니면 트레이 영역 안쪽 임의 위치로 되돌립니다.
+        token.style.position = 'absolute';
+        token.style.left = (Math.random() * 250 + 10) + 'px';
+        token.style.top = (Math.random() * 90 + 10) + 'px';
+        token.style.zIndex = 5;
+      }
+    }
+
+    // ---------- 10) 신규 : 저장 기록 관련 함수들 (localStorage 사용, 최대 10개 유지) ----------
+
+    // 저장된 기록 배열을 불러오는 함수
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (error) {
+        console.log('기록 불러오기 실패:', error);
+        return [];
+      }
+    }
+
+    // 기록 배열을 저장하는 함수
+    function saveHistoryList(historyArray) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(historyArray));
+    }
+
+    // 새 조합을 기록 맨 앞에 추가하고, 10개를 넘으면 오래된 것부터 삭제
+    function addToHistory(numbers) {
+      const history = loadHistory();
+      const newRecord = {
+        numbers: numbers,
+        date: new Date().toLocaleString('ko-KR')
+      };
+      history.unshift(newRecord); // 최신 기록을 맨 앞에 추가
+
+      if (history.length > MAX_HISTORY_COUNT) {
+        history.length = MAX_HISTORY_COUNT; // 10개까지만 남기고 나머지(오래된 것) 삭제
+      }
+      saveHistoryList(history);
+    }
+
+    // 기록 목록을 모달 화면에 그려주는 함수
+    function renderHistory() {
+      const history = loadHistory();
+      historyList.innerHTML = '';
+
+      if (history.length === 0) {
+        historyList.innerHTML = '<p class="emptyHistoryMsg">아직 저장된 조합이 없습니다. 번호를 완성해보세요!</p>';
+        return;
+      }
+
+      history.forEach((record, index) => {
+        const row = document.createElement('div');
+        row.className = 'historyItem';
+        row.innerHTML =
+          '<span class="historyIndex">' + (index + 1) + '</span>' +
+          '<span class="historyNumbers">' + record.numbers.join(', ') + '</span>' +
+          '<span class="historyDate">' + record.date + '</span>';
+        historyList.appendChild(row);
+      });
+    }
+
+    // ---------- 11) 버튼 이벤트 연결 ----------
+
+    // 황금번호 추출 버튼
+    extractBtn.addEventListener('click', () => {
+      currentExtractedNumbers = extractRandomNumbers();
+      createTokens(currentExtractedNumbers);
+      extractBtn.textContent = '다시 뽑기';
+    });
+
+    // 저장 기록 보기 버튼 → 모달 열기
+    historyBtn.addEventListener('click', () => {
+      renderHistory();
+      modalOverlay.style.display = 'flex';
+    });
+
+    // 모달 닫기 버튼
+    closeModalBtn.addEventListener('click', () => {
+      modalOverlay.style.display = 'none';
+    });
+
+    // 모달 바깥의 어두운 배경을 클릭해도 닫히도록 처리
+    modalOverlay.addEventListener('click', (event) => {
+      if (event.target === modalOverlay) {
+        modalOverlay.style.display = 'none';
+      }
+    });
+
+    // 기록 초기화 버튼
+    clearHistoryBtn.addEventListener('click', () => {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+    });
+  </script>
+</body>
+</html>
